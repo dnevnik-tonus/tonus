@@ -1191,7 +1191,9 @@ async function survey(){
                                     : (v > d.weight || 'Для набора веса цель должна быть больше текущего веса') } });
   }
   await botSay('И важный вопрос о здоровье. Что-то из этого про тебя?');
-  d.health = await waitAnswer({ replies:[['Беременность или кормление грудью','preg'],['Хронические заболевания или приём лекарств','chronic'],['Ничего из этого','none']], col:true });
+  const health = [['Хронические заболевания или приём лекарств','chronic'],['Ничего из этого','none']];
+  if (d.sex === 'f') health.unshift(['Беременность или кормление грудью','preg']);
+  d.health = await waitAnswer({ replies:health, col:true });
   if (!alive()) return;
 
   // сохраняем профиль и считаем норму
