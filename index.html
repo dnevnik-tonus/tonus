@@ -281,22 +281,6 @@ details p{margin-top:6px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:40;background:var(--ink);color:var(--surface);border-radius:14px;padding:11px 14px;font-size:14px;display:flex;gap:14px;align-items:center;width:max-content;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .toast button{appearance:none;border:0;background:transparent;color:var(--surface);font-weight:700;text-decoration:underline;cursor:pointer;padding:4px}
 
-/* daily notes, menu, activity */
-.notes{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.notes li{display:grid;grid-template-columns:8px 1fr;gap:10px;align-items:start;font-size:15px}
-.notes li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:7px}
-.notes .btn{justify-self:start;margin-top:6px}
-.tip{background:var(--accent-soft);border-radius:14px;padding:12px 14px;display:grid;gap:4px}
-.tip > b{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent)}
-.mlist{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:14px}
-.mlist li{display:flex;justify-content:space-between;gap:10px}
-.mlist li span:last-child{color:var(--muted);white-space:nowrap}
-.steps-row{display:flex;gap:8px;align-items:center}
-.steps-row input{flex:1}
-.setrow{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.setrow > span{min-width:0}
-.prog a,.tip a{color:var(--accent);font-weight:600}
-
 @media (max-width:360px){
   .kcal{grid-template-columns:1fr;justify-items:center}
   .kcal-side{width:100%}
@@ -359,38 +343,17 @@ const AUTHOR = 'Дмитрий и Екатерина Мёдовы, бизнес-
 const PRODUCTS = window.NL_PRODUCTS || [];
 const NL_META = window.NL_META || {};
 const CATS = ['Здоровое питание','Похудение','БАД и адаптогены','Коллаген','Для детей','Антиэйдж'];
-/* Рубрики «по целям» — как на сайте NL (поле goals из products.js). Показываем их как есть, без своих обещаний */
-const GOAL_RUBRICS = ['Антистресс, сон','Для неё','Для него','Работа мозга'];
-const TIP_RUBRIC = { sleep:'Антистресс, сон', stress:'Антистресс, сон', '45':'Для неё' };
 
 /* Программы — примеры схем на продуктах NL; дозировки и сроки строго по инструкциям NL.
    when: Утро / Обед / Ужин / Перекус / Днём; to — последний день курса, если он короче программы */
 const PROGRAMS = [
   { id:'start7', name:'Старт за 7 дней', days:7,
-    about:'Мягкий вход: коктейль вместо завтрака, суп ED Smart на ужин, обычный обед и вода по норме. Курс Омеги-3 по этикетке — 1 месяц: продолжай её после программы.',
+    about:'Мягкий вход: коктейль вместо завтрака, суп ED Smart на ужин, обычный обед и вода по норме.',
     plan:[
       { id:'a', when:'Утро', text:'ED Smart классический вместо завтрака', product:74448 },
-      { id:'b', when:'Утро', text:'Омега-3: 1 капсула во время еды (курс по этикетке — 1 месяц, продолжай после программы)', product:73797 },
+      { id:'b', when:'Утро', text:'Омега-3: 1 капсула во время еды', product:73797 },
       { id:'c', when:'Днём', text:'Фиточай «Водолей», 1 чашка', product:74300 },
       { id:'d', when:'Ужин', text:'ED Smart суп «Курица» вместо ужина', product:74621 }
-    ] },
-  /* 14 и 21 день: только продукты, чей курс по этикетке укладывается в срок программы
-     («ДрейнЭффект» гранат — 10–30 дней, коллаген — 10–20 дней) */
-  { id:'light14', name:'Лёгкость за 14 дней', days:14,
-    about:'«ДрейнЭффект» утром до завтрака, коктейль вместо завтрака, коллаген курсом 14 дней и суп ED Smart на ужин.',
-    plan:[
-      { id:'a', when:'Утро', text:'«ДрейнЭффект»: 1 стик в 200 мл воды за 30 минут до завтрака', product:74645 },
-      { id:'b', when:'Утро', text:'ED Smart классический вместо завтрака', product:74448 },
-      { id:'c', when:'Обед', text:'«Пептидный коллаген»: 1 стик в 100 мл воды во время еды', product:74537 },
-      { id:'d', when:'Ужин', text:'ED Smart суп «Курица» вместо ужина', product:74621 }
-    ] },
-  { id:'rhythm21', name:'Ритм за 21 день', days:21,
-    about:'Коктейль вместо завтрака, «ДрейнЭффект» до обеда и коллаген курсом 20 дней, фиточай днём. Обед и ужин — обычная еда.',
-    plan:[
-      { id:'a', when:'Утро', text:'ED Smart молочный «Кофе с молоком» вместо завтрака', product:74039 },
-      { id:'b', when:'Обед', text:'«ДрейнЭффект»: 1 стик в 200 мл воды за 30 минут до обеда (дни 1–20)', product:74645, to:20 },
-      { id:'c', when:'Обед', text:'«Пептидный коллаген»: 1 стик в 100 мл воды во время еды (дни 1–20)', product:74537, to:20 },
-      { id:'d', when:'Днём', text:'Фиточай «Водолей»: 1 фильтр-пакет на стакан кипятка', product:74300 }
     ] },
   { id:'bal30', name:'В форме за 30 дней', days:30,
     about:'Коктейль вместо завтрака, суп на ужин, омега-3 каждый день и коллаген курсом 20 дней.',
@@ -402,138 +365,26 @@ const PROGRAMS = [
     ] }
 ];
 
-/* Обычная еда по группам: на 100 г (напитки — на 100 мл) — ккал, белки, жиры, углеводы, порция по умолчанию.
-   Крупы, макароны, мясо и рыба — в готовом виде, кроме отмеченных «сухие» */
-const FOOD_GROUPS = [
-  ['Крупы и гарниры', [
-    ['Гречка варёная',110,4.2,1.1,21.3,150], ['Рис варёный',116,2.2,0.5,24.9,150], ['Рис бурый варёный',111,2.6,0.9,23,150],
-    ['Овсянка на воде',88,3,1.7,15,200], ['Овсянка на молоке',102,3.2,4.1,14.2,200], ['Овсяные хлопья (сухие)',352,12.3,6.2,61.8,40],
-    ['Пшено варёное',90,3,0.7,17,150], ['Булгур варёный',83,3.1,0.2,18.6,150], ['Киноа варёная',120,4.4,1.9,21.3,150],
-    ['Перловка варёная',109,3.1,0.4,22.2,150], ['Макароны варёные',112,3.5,0.4,23,150], ['Картофель отварной',82,2,0.4,16.7,150],
-    ['Картофельное пюре',106,2.5,4.2,14.7,200], ['Картофель жареный',192,2.8,9.5,23.4,150],
-    ['Чечевица варёная',116,9,0.4,20.1,150], ['Фасоль варёная',127,8.7,0.5,22.8,150], ['Нут варёный',164,8.9,2.6,27.4,150] ]],
-  ['Мясо и рыба', [
-    ['Куриная грудка отварная',137,29.8,1.8,0.5,120], ['Куриное бедро запечённое без кожи',179,24.8,8.2,0,120],
-    ['Индейка, филе',114,23.5,1.5,0,120], ['Говядина тушёная',232,16.8,18.3,0,100], ['Говядина отварная',254,25.8,16.8,0,100],
-    ['Свинина запечённая',242,27.3,13.9,0,100], ['Котлета домашняя',250,16,16,9,90], ['Сосиски молочные',266,11,23.9,1.6,50],
-    ['Колбаса варёная',257,12.8,22.2,1.5,30], ['Лосось запечённый',208,20,13,0,120], ['Треска запечённая',105,22.8,0.9,0,150],
-    ['Минтай отварной',79,17.6,1,0,150], ['Скумбрия запечённая',262,23.9,17.8,0,100], ['Сельдь слабосолёная',217,19.8,15.4,0,50],
-    ['Тунец в собственном соку',96,21,1,0,80], ['Креветки варёные',99,24,0.3,0.2,100] ]],
-  ['Яйца и молочное', [
-    ['Яйцо куриное',157,12.7,11.5,0.7,55], ['Омлет',184,9.6,15.4,1.9,150], ['Творог 0%',71,16.5,0,1.3,150],
-    ['Творог 5%',121,17.2,5,1.8,150], ['Творог 9%',159,16.7,9,2,150], ['Сырники',220,14,11,16,120],
-    ['Кефир 1%',40,3,1,4,200], ['Кефир 2,5%',53,2.9,2.5,4,200], ['Молоко 2,5%',52,2.8,2.5,4.7,200],
-    ['Йогурт натуральный 2,5%',66,4.3,2.5,6.2,125], ['Сметана 15%',162,2.6,15,3.6,20], ['Сыр твёрдый',356,24,28,0,30],
-    ['Сыр моцарелла',280,22,22,0,30], ['Брынза',260,17.9,20.1,0,30] ]],
-  ['Хлеб и выпечка', [
-    ['Хлеб цельнозерновой',230,8.5,2.5,43,40], ['Хлеб белый',264,7.5,2.9,51.4,30], ['Хлеб ржаной',208,6.8,1.3,40.7,30],
-    ['Лаваш тонкий',236,7.9,1,47.6,40], ['Хлебцы ржаные',310,11,2.7,58,20], ['Блины',233,6.1,12.3,26,80],
-    ['Печенье овсяное',437,6.5,14.4,71.8,30], ['Пахлава',428,6.7,29,37.6,50], ['Торт',350,4.5,18,43,100] ]],
-  ['Овощи', [
-    ['Огурец',15,0.8,0.1,2.8,100], ['Помидор',20,0.6,0.2,4.2,100], ['Салат овощной с маслом',90,1.3,7,5,150],
-    ['Капуста белокочанная',27,1.8,0.1,4.7,100], ['Брокколи варёная',35,2.4,0.4,7.2,150], ['Морковь',35,1.3,0.1,6.9,100],
-    ['Перец болгарский',26,1.3,0.1,5.3,100], ['Свёкла варёная',49,1.8,0,10.8,100], ['Авокадо',160,2,14.7,1.8,70] ]],
-  ['Фрукты и ягоды', [
-    ['Яблоко',47,0.4,0.4,9.8,150], ['Банан',96,1.5,0.2,21,120], ['Апельсин',43,0.9,0.2,8.1,150],
-    ['Мандарин',38,0.8,0.2,7.5,80], ['Груша',47,0.4,0.3,10.3,150], ['Киви',47,0.8,0.4,8.1,75],
-    ['Виноград',72,0.6,0.6,15.4,100], ['Клубника',41,0.8,0.4,7.5,150], ['Арбуз',27,0.6,0.1,5.8,250],
-    ['Хурма',67,0.5,0.4,15.3,150], ['Гранат',72,0.7,0.6,14.5,150], ['Финики',282,2.5,0.5,69.2,30],
-    ['Курага',215,5.2,0.3,51,30], ['Изюм',264,2.9,0.6,66,30] ]],
-  ['Орехи и сладкое', [
-    ['Орехи грецкие',654,15,65,7,30], ['Миндаль',609,18.6,57.7,16.2,30], ['Семечки подсолнечника',578,20.7,52.9,10.5,30],
-    ['Арахис',551,26.3,45.2,9.9,30], ['Шоколад тёмный',540,6,35,48,20], ['Шоколад молочный',550,6.9,35.7,54.4,20],
-    ['Мёд',329,0.8,0,81.5,15], ['Сахар',399,0,0,99.8,5], ['Мороженое пломбир',232,3.2,15,20.8,80], ['Зефир',326,0.8,0,79.8,30] ]],
-  ['Блюда и супы', [
-    ['Борщ',51,1.1,2.2,6.7,300], ['Суп куриный с лапшой',40,2.4,1.3,4.6,300], ['Плов',190,7,7,25,250],
-    ['Пельмени варёные',275,11.9,12.4,29,200], ['Вареники с картошкой',145,4.4,3.5,24,200], ['Пицца',266,11.4,10.4,33,150],
-    ['Шаурма с курицей',210,10,10,20,300], ['Гамбургер',257,12.5,11,27,120], ['Салат «Оливье»',196,5.5,16.5,6.4,150],
-    ['Майонез',615,0.3,67,2.6,15], ['Кетчуп',93,1.8,1,22.2,15], ['Масло сливочное',748,0.5,82.5,0.8,10],
-    ['Масло оливковое',898,0,99.8,0,10] ]],
-  ['Напитки', [
-    ['Кофе с молоком',30,1.5,1.5,2.5,200], ['Капучино',40,2,2,3.3,250], ['Чай с 1 ложкой сахара',10,0,0,2.5,200],
-    ['Сок апельсиновый',45,0.7,0.2,10.4,200], ['Кока-кола',42,0,0,10.6,330], ['Пиво светлое',43,0.3,0,4.6,500],
-    ['Вино сухое',68,0.2,0,0.3,150], ['Водка',235,0,0,0.1,50] ], 'мл']
-];
-const FOODS = FOOD_GROUPS.flatMap(([grp, list, unit]) =>
-  list.map(([name,kcal,p,f,c,g]) => ({ name, kcal, p, f, c, g, grp, unit: unit || 'г' })));
-
-/* Ориентир по меню: примеры дней. Пункт — [название из FOODS, граммы] или ['nl', id продукта NL] (1 порция).
-   Порции обычной еды подгоняются под норму человека, продукты NL — всегда 1 порция */
-const MENU_DAYS = [
-  { name:'С коктейлем на завтрак', meals:{
-      breakfast:[['nl',74448]],
-      lunch:[['Гречка варёная',180],['Куриная грудка отварная',150],['Салат овощной с маслом',150],['Хлеб цельнозерновой',30]],
-      snack:[['Творог 5%',150],['Яблоко',150]],
-      dinner:[['Лосось запечённый',120],['Брокколи варёная',200],['Рис бурый варёный',100]] } },
-  { name:'Обычная еда весь день', meals:{
-      breakfast:[['Овсянка на молоке',250],['Яйцо куриное',110]],
-      lunch:[['Суп куриный с лапшой',300],['Индейка, филе',120],['Рис бурый варёный',150],['Помидор',100]],
-      snack:[['Йогурт натуральный 2,5%',125],['Миндаль',20]],
-      dinner:[['Минтай отварной',200],['Картофель отварной',150],['Салат овощной с маслом',150]] } },
-  { name:'С супом ED Smart на ужин', meals:{
-      breakfast:[['Сырники',150],['Сметана 15%',20],['Кофе с молоком',200]],
-      lunch:[['Говядина тушёная',100],['Булгур варёный',150],['Салат овощной с маслом',150],['Хлеб ржаной',30]],
-      snack:[['Кефир 1%',200],['Орехи грецкие',15],['Мандарин',80]],
-      dinner:[['nl',74621],['Огурец',100]] } }
-];
-
-/* Простые рецепты: ингредиенты из FOODS (граммы), калории считаются сами */
-const RECIPES = [
-  { name:'Омлет с овощами', ing:[['Яйцо куриное',110],['Молоко 2,5%',50],['Помидор',80],['Перец болгарский',50]], extra:'зелень, соль, перец',
-    steps:'Взбей яйца с молоком, добавь нарезанные овощи. Готовь на сковороде с антипригарным покрытием под крышкой 6–8 минут на среднем огне.' },
-  { name:'Курица с гречкой и салатом', ing:[['Куриная грудка отварная',150],['Гречка варёная',150],['Огурец',100],['Помидор',100],['Масло оливковое',5]], extra:'зелень, соль, лимонный сок',
-    steps:'Отвари грудку 20–25 минут в подсоленной воде и нарежь. Гречку свари заранее. Огурец и помидор нарежь, заправь маслом и лимонным соком.' },
-  { name:'Рыба с овощами в духовке', ing:[['Треска запечённая',200],['Брокколи варёная',150],['Морковь',80],['Масло оливковое',5]], extra:'лимон, соль, специи',
-    steps:'Выложи рыбу и овощи в форму, сбрызни маслом и лимонным соком, посоли. Запекай 20–25 минут при 190 °C.' },
-  { name:'Творожная запеканка без муки', ing:[['Творог 5%',150],['Яйцо куриное',55],['Банан',60],['Овсяные хлопья (сухие)',20]], extra:'ваниль или корица',
-    steps:'Разомни творог с яйцом и бананом, добавь хлопья. Выложи в форму и запекай 25–30 минут при 180 °C.' },
-  { name:'Салат с тунцом и яйцом', ing:[['Тунец в собственном соку',80],['Яйцо куриное',55],['Огурец',100],['Помидор',100],['Йогурт натуральный 2,5%',30]], extra:'листья салата, зелень',
-    steps:'Нарежь яйцо и овощи, добавь тунец, заправь йогуртом вместо майонеза.' },
-  { name:'Ленивая овсянка в банке', ing:[['Овсяные хлопья (сухие)',40],['Кефир 1%',150],['Клубника',80],['Миндаль',10]], extra:'корица по вкусу',
-    steps:'Залей хлопья кефиром, добавь ягоды, закрой и убери в холодильник на ночь. Утром посыпь орехами.' },
-  { name:'Суп-пюре из брокколи', ing:[['Брокколи варёная',300],['Картофель отварной',100],['Сметана 15%',20]], extra:'соль, перец, зелень',
-    steps:'Отвари брокколи и картофель, слей часть воды, пробей блендером до пюре. Подавай со сметаной.' }
-];
+/* Обычная еда: на 100 г — ккал, белки, жиры, углеводы, порция по умолчанию (г) */
+const FOODS = [
+  ['Гречка варёная',110,4.2,1.1,21.3,150], ['Рис варёный',116,2.2,0.5,24.9,150],
+  ['Овсянка на воде',88,3,1.7,15,200], ['Макароны варёные',112,3.5,0.4,23,150],
+  ['Картофель отварной',82,2,0.4,16.7,150], ['Куриная грудка отварная',137,29.8,1.8,0.5,120],
+  ['Индейка, филе',114,23.5,1.5,0,120], ['Говядина тушёная',232,16.8,18.3,0,100],
+  ['Лосось запечённый',208,20,13,0,120], ['Яйцо куриное',157,12.7,11.5,0.7,55],
+  ['Творог 5%',121,17.2,5,1.8,150], ['Кефир 1%',40,3,1,4,200],
+  ['Сыр твёрдый',356,24,28,0,30], ['Хлеб цельнозерновой',230,8.5,2.5,43,40],
+  ['Огурец',15,0.8,0.1,2.8,100], ['Помидор',20,0.6,0.2,4.2,100],
+  ['Салат овощной с маслом',90,1.3,7,5,150], ['Яблоко',47,0.4,0.4,9.8,150],
+  ['Банан',96,1.5,0.2,21,120], ['Орехи грецкие',654,15,65,7,30],
+  ['Шоколад тёмный',540,6,35,48,20], ['Кофе с молоком',30,1.5,1.5,2.5,200]
+].map(([name,kcal,p,f,c,g]) => ({ name, kcal, p, f, c, g }));
 
 const MEALS = [['breakfast','Завтрак'],['lunch','Обед'],['dinner','Ужин'],['snack','Перекус']];
 const WHEN_TO_MEAL = { 'Утро':'breakfast', 'Обед':'lunch', 'Ужин':'dinner', 'Перекус':'snack' };
 const MOODS = ['Плохо','Так себе','Средне','Хорошо','Отлично'];
 const ACTIVITY = [[1.2,'Мало движения'],[1.375,'Лёгкая активность'],[1.55,'Спорт 3–5 раз в неделю'],[1.725,'Высокая активность']];
 const GOALS = [['lose','Снизить вес'],['keep','Держать вес'],['gain','Набрать вес']];
-const WEIGH_EVERY = [[1,'Каждый день'],[3,'Раз в 3 дня'],[7,'Раз в неделю'],[0,'Не напоминать']];
-const CONCERNS = [['ok','Всё хорошо'],['sleep','Плохо сплю'],['energy','Часто устаю'],['stress','Бывает тревожно']];
-/* Тренировки: MET — сколько раз больше энергии, чем в покое (ккал ≈ MET × вес × часы) */
-const WORKOUTS = [['Ходьба',3.5],['Бег',8],['Кардио',6.5],['Силовая',5],['Йога и растяжка',2.5],['Плавание',6],['Велосипед',6.8],['Танцы',5]];
-const STEPS_GOAL = 10000;
-/* Мои добавки: когда принимать и с какого часа напоминать */
-const SUPP_WHEN = [['Утро',6],['Перед завтраком',6],['Обед',12],['Ужин',18],['Перед сном',21]];
-
-/* Совет дня: общие советы по образу жизни, без обещаний эффекта от продуктов. tag — для кого в первую очередь */
-const TIPS = [
-  ['food','Собирай тарелку так: половина — овощи, четверть — белок (мясо, рыба, яйца, творог), четверть — крупы или картофель.'],
-  ['food','Белок в каждом приёме пищи помогает дольше оставаться сытым.'],
-  ['food','Возьми с собой ланчбокс: когда нормальная еда под рукой, проще не перекусить случайным.'],
-  ['food','Записывай еду сразу после приёма пищи: кусочки «на ходу» и доедание тоже считаются.'],
-  ['food','Ешь не спеша: чувство сытости приходит примерно через 20 минут.'],
-  ['food','Коктейль ED Smart заменяет 1–2 приёма пищи в день, остальное — обычная еда. Идеи — в «Питании» → «Меню и рецепты».'],
-  ['water','Начни утро со стакана воды, а бутылку держи на виду — так проще выпить норму.'],
-  ['water','Иногда жажду путают с голодом: если тянет перекусить, сначала выпей стакан воды.'],
-  ['move','Прогулка 30 минут — это примерно 3–4 тысячи шагов. Выйди на одну остановку раньше.'],
-  ['move','Поднимайся по лестнице хотя бы на 2–3 этажа: небольшое движение в течение дня складывается.'],
-  ['move','Сделай утром 5–10 минут зарядки или растяжки — тело проснётся быстрее.'],
-  ['weight','Вес может колебаться на 0,3–1 кг за день: вода, соль, цикл, поздний ужин. Смотри на тренд за 2–3 недели.'],
-  ['weight','Бывает, что вес стоит, а объёмы уходят. Записывай талию и бёдра раз в 1–2 недели.'],
-  ['sleep','Проветри спальню перед сном: в прохладной комнате засыпать легче.'],
-  ['sleep','Старайся ложиться и вставать в одно и то же время, даже в выходные.'],
-  ['sleep','За час до сна отложи телефон и приглуши свет — так проще настроиться на сон.'],
-  ['sleep','Кофе после обеда и тяжёлый ужин мешают сну. Последний приём пищи — за 2–3 часа до сна.'],
-  ['energy','Если днём клонит в сон, проверь воду и завтрак: пропущенный завтрак часто «догоняет» усталостью.'],
-  ['energy','Короткая прогулка на свежем воздухе бодрит лучше третьей чашки кофе.'],
-  ['stress','Когда тревожно, попробуй медленное дыхание: вдох на 4 счёта, выдох на 6, несколько минут.'],
-  ['stress','Спокойная музыка, тёплый душ, прогулка — простые способы снять напряжение вечером.'],
-  ['45','После 45 вес часто уходит медленнее — это нормально. Помогают белок в каждом приёме пищи, силовые упражнения и хороший сон.'],
-  ['45','Темп 0,3–0,5 кг в неделю — хороший результат. Важнее, чтобы он держался.']
-];
 const VIEWS = ['today','food','progress','products','profile'];
 
 /* ---------- утилиты ---------- */
@@ -552,25 +403,8 @@ const uid = () => Math.random().toString(36).slice(2,10);
 const $ = id => document.getElementById(id);
 const prod = id => PRODUCTS.find(p => String(p.id) === String(id));
 const progById = id => PROGRAMS.find(p => p.id === id);
-/* Что понадобится на программу: каждый пункт плана — 1 порция в день;
-   упаковки считаем, если на сайте NL указано число порций в упаковке */
-function programBasket(pr){
-  const by = new Map();
-  for (const i of pr.plan){
-    const p = prod(i.product); if (!p) continue;
-    by.set(p.id, { p, n: Math.max((by.get(p.id) || {}).n || 0, i.to || pr.days) });
-  }
-  return [...by.values()].map(({ p, n }) => {
-    const inPack = parseInt(p.pack, 10);
-    return { p, need: inPack > 0 ? `${Math.ceil(n/inPack)} уп. (нужно ${n} ${plural(n, 'порция', 'порции', 'порций')}, в упаковке ${p.pack})`
-                                  : `на ${nDays(n)} — количество по инструкции на упаковке` };
-  });
-}
 const mealName = m => (MEALS.find(x => x[0] === m) || MEALS[0])[1];
 const relDay = k => { const n = daysBetween(k, todayKey()); return n === 0 ? 'Сегодня' : n === 1 ? 'Вчера' : fmtDay(k); };
-const plural = (n, one, few, many) => { const a = Math.abs(n) % 100, b = a % 10; return a > 10 && a < 20 ? many : b === 1 ? one : b >= 2 && b <= 4 ? few : many; };
-const nDays = n => n + ' ' + plural(n, 'день', 'дня', 'дней');
-const sx = (m, f) => S.profile.sex === 'm' ? m : f;
 function mealByTime(){ const h = new Date().getHours(); return h < 11 ? 'breakfast' : h < 15 ? 'lunch' : h < 18 ? 'snack' : 'dinner'; }
 
 /* ---------- хранение (только на этом устройстве) ---------- */
@@ -578,7 +412,7 @@ const KEY = 'moy-balans.v2';
 function blank(){
   return { v:1, demo:false,
     profile:{ name:'', sex:'f', age:30, height:165, activity:1.375, goal:'lose', target:null, startWeight:70 },
-    weights:[], meals:{}, water:{}, checks:{}, mood:{}, sleep:{}, pulse:[], program:null, steps:{}, workouts:{}, supps:[], suppChecks:{}, periods:[] };
+    weights:[], meals:{}, water:{}, checks:{}, mood:{}, sleep:{}, pulse:[], program:null };
 }
 function load(){ try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch(e){} return null; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
@@ -593,7 +427,7 @@ function entryFromProduct(pid, meal, portions){
 const countsKcal = p => !!p && p.kind !== 'other' && (p.kcal || 0) >= 10;
 function entryFromFood(food, meal, g){
   const k = g/100;
-  return { id:uid(), meal, name:food.name, amount:fmtN(g,0) + ' ' + food.unit,
+  return { id:uid(), meal, name:food.name, amount:fmtN(g,0) + ' г',
     kcal:Math.round(food.kcal*k), p:r1(food.p*k), f:r1(food.f*k), c:r1(food.c*k) };
 }
 const food = name => FOODS.find(f => f.name === name);
@@ -615,8 +449,6 @@ function demoState(){
   s.checks[t] = shake ? { a:shake.id } : {};
   s.water[t] = 1000; s.water[y] = 2000;
   s.mood[t] = 4; s.sleep[t] = 7;
-  s.steps[t] = 6200; s.steps[y] = 9400;
-  s.workouts[y] = [{ id:uid(), type:'Ходьба', min:40, kcal:Math.round(3.5*74*40/60) }];
   const at = (ago,h,m) => { const d = addDays(now,-ago); d.setHours(h,m,0,0); return Math.min(d.getTime(), now.getTime()); };
   s.pulse = [ { t:at(2,8,5), bpm:74, sys:121, dia:79, src:'manual' },
               { t:at(1,8,20), bpm:71, sys:118, dia:77, src:'manual' },
@@ -626,16 +458,13 @@ function demoState(){
 
 /* В клиентской версии (сайт) приложение стартует пустым, в демо — с примерами */
 let S = load() || (window.APP_MODE === 'release' ? blank() : demoState());
-S.steps = S.steps || {}; S.workouts = S.workouts || {};   // поля из новых версий
-S.supps = S.supps || []; S.suppChecks = S.suppChecks || {}; S.periods = S.periods || [];
 
 /* ---------- расчёты ---------- */
 function sortedWeights(){ return S.weights.slice().sort((a,b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0); }
 function currentWeight(){ const w = sortedWeights(); return w.length ? w[w.length-1].kg : (S.profile.startWeight || 70); }
-function bmrOf(w){ const pr = S.profile; return 10*w + 6.25*pr.height - 5*pr.age + (pr.sex === 'm' ? 5 : -161); }
 function goals(){
   const pr = S.profile, w = currentWeight();
-  const bmr = bmrOf(w);
+  const bmr = 10*w + 6.25*pr.height - 5*pr.age + (pr.sex === 'm' ? 5 : -161);
   const k = { lose:0.85, keep:1, gain:1.1 }[pr.goal] || 1;
   const kcal = Math.max(1200, Math.round(bmr*pr.activity*k/10)*10);
   const p = Math.round(w*1.4), f = Math.round(kcal*0.3/9);
@@ -649,75 +478,6 @@ function totals(k){
 function upsertWeight(d, kg, waist, hips){
   S.weights = S.weights.filter(w => w.d !== d);
   S.weights.push({ d, kg, waist:waist || null, hips:hips || null });
-}
-
-/* Прогноз до цели: 1 кг жира ≈ 7700 ккал. Расчётный темп — по разнице между расходом и нормой,
-   фактический — по замерам за последние 8 недель, если они охватывают хотя бы 2 недели */
-function forecast(){
-  const pr = S.profile, cur = currentWeight();
-  if (!pr.target || pr.goal === 'keep') return null;
-  const dir = pr.goal === 'lose' ? -1 : 1, left = r1((pr.target - cur)*dir);
-  if (left <= 0) return { done:true };
-  const delta = Math.abs(bmrOf(cur)*pr.activity - goals().kcal);
-  const weekly = Math.min(1, delta*7/7700);
-  const res = { left, delta:Math.round(delta/10)*10, weekly, weeks: weekly >= 0.05 ? left/weekly : null };
-  const from = dkey(addDays(new Date(), -56)), ws = sortedWeights().filter(w => w.d >= from);
-  const span = ws.length >= 3 ? daysBetween(ws[0].d, ws[ws.length-1].d) : 0;
-  if (span >= 14){
-    res.pace = Math.round((ws[ws.length-1].kg - ws[0].kg)/span*7*100)/100;
-    if (res.pace*dir >= 0.05) res.paceWeeks = left/(res.pace*dir);
-  }
-  return res;
-}
-/* «примерно 4–6 месяцев»: диапазон, а не точная дата — вес уходит неравномерно */
-function fmtSpan(weeks){
-  if (weeks < 8){
-    const a = Math.max(1, Math.floor(weeks*0.85)), b = Math.max(a + 1, Math.ceil(weeks*1.15));
-    return `${a}–${b} ${plural(b, 'неделя', 'недели', 'недель')}`;
-  }
-  const m = weeks/4.35, a = Math.max(1, Math.floor(m*0.85)), b = Math.max(a + 1, Math.ceil(m*1.15));
-  return `${a}–${b} ${plural(b, 'месяц', 'месяца', 'месяцев')}`;
-}
-const fmtMonth = weeks => addDays(new Date(), Math.round(weeks*7)).toLocaleDateString('ru-RU', { month:'long', year:'numeric' });
-function fmtDur(n){
-  if (n < 14) return nDays(n);
-  if (n < 61){ const w = Math.round(n/7); return w + ' ' + plural(w, 'неделю', 'недели', 'недель'); }
-  const m = Math.round(n/30.4); return m + ' ' + plural(m, 'месяц', 'месяца', 'месяцев');
-}
-/* изменение замера (вес, талия, бёдра) от первой записи до последней */
-function change(field){
-  const ws = sortedWeights().filter(w => w[field] != null);
-  if (ws.length < 2) return null;
-  const a = ws[0], b = ws[ws.length-1];
-  return { from:a[field], to:b[field], diff:r1(b[field] - a[field]), dur:daysBetween(a.d, b.d), since:a.d };
-}
-const signed = v => (v > 0 ? '+' : '') + fmtN(v);
-
-/* Цикл: храним только даты начала месячных. Средняя длина — по последним 3 циклам длиной 21–45 дней, иначе 28.
-   Овуляцию не считаем: это не метод контрацепции и не медицинский прогноз */
-const cycleOn = () => S.profile.sex === 'f' && S.profile.cycle !== false;
-function cycleInfo(t){
-  const ps = S.periods.filter(d => d <= t).sort();
-  if (!ps.length) return null;
-  const last = ps[ps.length-1], lens = [];
-  for (let i = 1; i < ps.length; i++){ const n = daysBetween(ps[i-1], ps[i]); if (n >= 21 && n <= 45) lens.push(n); }
-  const recent = lens.slice(-3), avg = recent.length ? Math.round(recent.reduce((a,b) => a + b, 0)/recent.length) : 28;
-  return { last, day: daysBetween(last, t) + 1, avg, next: dkey(addDays(parseKey(last), avg)), measured: recent.length > 0 };
-}
-/* перед месячными и в первые дни вес часто прибавляет из-за воды */
-function cycleWaterDays(t){
-  if (!cycleOn()) return null;
-  const ci = cycleInfo(t); if (!ci) return null;
-  const toNext = daysBetween(t, ci.next);
-  return ci.day <= 4 || (toNext >= 0 && toNext <= 5) ? ci : null;
-}
-
-/* сколько дней подряд заполнен дневник питания (сегодня считается, если уже есть записи) */
-function diaryStreak(){
-  let d = new Date(), n = 0;
-  if (!(S.meals[dkey(d)] || []).length) d = addDays(d, -1);
-  while ((S.meals[dkey(d)] || []).length){ n++; d = addDays(d, -1); }
-  return n;
 }
 
 /* ---------- общие куски разметки ---------- */
@@ -763,7 +523,6 @@ function renderToday(){
       <h2>Добро пожаловать!</h2>
       <p class="small muted">Укажите рост, вес и цель, и приложение посчитает вашу норму калорий, белка и воды на день.</p>
       <button class="btn" data-act="bot-open" data-mode="survey">Пройти анкету</button></div>` : ''}
-    ${notesCard(t)}
 
     <div class="card kcal">
       <svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Съедено ${fmtN(tot.kcal,0)} из ${fmtN(g.kcal,0)} ккал">
@@ -781,15 +540,12 @@ function renderToday(){
     </div>
 
     ${programCard(t)}
-    ${suppCard(t)}
 
     <div class="card">
       <div class="row between"><h2>Вода</h2><span class="small"><span class="water-v tnum">${fmtN(water/1000,2)} л</span> <span class="muted">из ${fmtN(g.water/1000,1)} л</span></span></div>
       <div class="glasses">${Array.from({ length:glasses }, (_,i) => `<button class="glass ${i < filled ? 'on' : ''}" data-act="water-set" data-n="${i+1}" aria-label="${(i+1)*250} мл"></button>`).join('')}</div>
       <div class="row"><button class="btn ghost" style="flex:1" data-act="water-add" data-ml="250">+ стакан 250 мл</button><button class="btn line" data-act="water-add" data-ml="-250" aria-label="Убрать стакан">−</button></div>
     </div>
-
-    ${activityCard(t)}
 
     <div class="grid2">
       <button class="mini" data-act="tab" data-v="progress" data-to="w-form">
@@ -817,112 +573,6 @@ function renderToday(){
     <p class="fine">«Тонус» — автор: ${esc(AUTHOR)}. Не является официальным приложением NL International.</p>`;
 }
 
-/* «На сегодня»: что не забыть + совет дня. Скрывается до завтра крестиком или совсем — в профиле */
-const DUE_FROM = { 'Утро':6, 'Днём':12, 'Обед':12, 'Перекус':15, 'Ужин':18 };
-function notesCard(t){
-  const pr = S.profile;
-  if (pr.hints === false || S.notesHidden === t || (!pr.name && !S.weights.length)) return '';
-  const h = new Date().getHours(), g = goals(), meals = S.meals[t] || [], notes = [];
-  if (S.program){
-    const p = progById(S.program.id), day = daysBetween(S.program.start, t) + 1;
-    if (p && day >= 1 && day <= p.days){
-      notes.push(day === p.days ? `Сегодня последний, ${day}-й день программы «${p.name}» — ты почти у цели!` : `Сегодня ${day}-й день программы «${p.name}».`);
-      const ch = S.checks[t] || {}, due = p.plan.filter(i => (!i.to || day <= i.to) && !ch[i.id] && h >= (DUE_FROM[i.when] ?? 6));
-      if (due.length) notes.push('Ещё не отмечено: ' + due.map(i => i.text).join('; ') + '.');
-    }
-  }
-  const sd = suppsDue(t, h);
-  if (sd.length) notes.push('Мои добавки — пора принять: ' + sd.map(s => s.name + (s.note ? ` (${s.note})` : '')).join('; ') + '.');
-  if (h >= 11 && !meals.some(e => e.meal === 'breakfast')) notes.push(`Ты ещё не ${sx('записал','записала')} завтрак. Если уже ${sx('поел','поела')} — добавь, пока помнишь.`);
-  const streak = diaryStreak();
-  if (streak >= 2) notes.push(meals.length ? `Ты ведёшь дневник ${streak}-й день подряд — ${sx('молодец','умница')}!` : `Вчера был ${streak}-й день дневника подряд. Продолжим сегодня?`);
-  const every = pr.weighEvery ?? 7, ws = sortedWeights(), last = ws.length ? ws[ws.length-1].d : null;
-  const weighDue = every > 0 && (!last || daysBetween(last, t) >= every);
-  if (weighDue) notes.push(last ? `Пора взвеситься: последний замер ${nDays(daysBetween(last, t))} назад.` : 'Запиши свой вес — с него начнётся график.');
-  const water = S.water[t] || 0;
-  if (h >= 16 && water < g.water/2) notes.push(`Выпито ${fmtN(water/1000,1)} л воды из ${fmtN(g.water/1000,1)} — самое время для стакана.`);
-  return `<div class="card">
-    <div class="row between"><h2>На сегодня</h2><button class="x" data-act="notes-hide" aria-label="Скрыть до завтра">×</button></div>
-    ${notes.length ? `<ul class="notes">${notes.map(n => `<li><span>${esc(n)}</span></li>`).join('')}</ul>` : ''}
-    ${weighDue ? `<button class="btn line sm" style="justify-self:start" data-act="tab" data-v="progress" data-to="w-form">Записать вес</button>` : ''}
-    ${tipHTML(t)}
-  </div>`;
-}
-/* совет дня; к советам о сне, тревоге и 45+ — ссылка на рубрику сайта NL (не чаще, чем через день) */
-function tipHTML(t){
-  const [tag, text] = tipOfDay(t), rub = TIP_RUBRIC[tag];
-  return `<div class="tip"><b>Совет дня</b><p class="small">${esc(text)}</p>
-    ${rub ? `<button class="btn line sm" style="justify-self:start" data-act="goal-open" data-g="${esc(rub)}">Продукты NL: рубрика «${esc(rub)}»</button>` : ''}</div>`;
-}
-/* через день — совет по тому, что человек отметил в анкете (сон, энергия, тревога, 45+), в остальные дни — общий */
-function tipOfDay(t){
-  const pr = S.profile, n = Math.abs(daysBetween('2026-01-01', t));
-  const mine = [pr.concern, pr.sex === 'f' && pr.age >= 45 ? '45' : null].filter(x => x && x !== 'ok');
-  const pool = TIPS.filter(([tag]) => n % 2 === 0 && mine.length ? mine.includes(tag) : ['food','water','move','weight'].includes(tag));
-  return pool[Math.floor(n/2) % pool.length];
-}
-
-/* --- шаги и тренировки --- */
-function workoutKcal(type, min){ const w = WORKOUTS.find(x => x[0] === type); return Math.round((w ? w[1] : 4)*currentWeight()*min/60); }
-function activityCard(t){
-  const steps = S.steps[t] || 0, wo = S.workouts[t] || [];
-  return `<div class="card">
-    <div class="row between"><h2>Активность</h2><span class="small muted tnum">цель ${fmtN(STEPS_GOAL,0)} шагов</span></div>
-    <div class="row between"><span><b class="num big">${fmtN(steps,0)}</b> <span class="muted">${plural(steps, 'шаг', 'шага', 'шагов')}</span></span>${steps >= STEPS_GOAL ? `<span class="pill">Цель выполнена</span>` : ''}</div>
-    <div class="progbar"><i style="width:${Math.min(100, steps/STEPS_GOAL*100).toFixed(1)}%"></i></div>
-    <form class="steps-row" id="steps-form"><input id="steps-in" type="number" inputmode="numeric" min="0" max="100000" placeholder="Шаги за сегодня" aria-label="Шаги за сегодня"><button class="btn ghost" type="submit">Записать</button></form>
-    <p class="fine">Перепишите число шагов из приложения «Здоровье» на iPhone или Google Fit на Android.</p>
-    ${wo.length ? `<ul class="entries">${wo.map(w => `<li class="entry"><div class="e-main"><div class="e-name">${esc(w.type)}</div><div class="muted small tnum">${w.min} мин · ≈ ${w.kcal} ккал</div></div>
-      <button class="x" data-act="del-wo" data-id="${w.id}" aria-label="Удалить тренировку">×</button></li>`).join('')}</ul>` : ''}
-    <button class="btn line sm" style="justify-self:start" data-act="wo-open">+ Тренировка</button>
-  </div>`;
-}
-function openWorkout(){ sh = { kind:'wo', type:WORKOUTS[0][0], min:30 }; renderSheet(); openSheet(); }
-function renderWorkoutSheet(){
-  $('sheet-body').innerHTML = `
-    <div class="sheet-head"><div><div class="eyebrow">Сегодня</div><h2 id="sheet-title">Добавить тренировку</h2></div>
-      <button class="x" data-act="sheet-close" aria-label="Закрыть">×</button></div>
-    <div class="chips">${WORKOUTS.map(([n]) => `<button class="chip ${n === sh.type ? 'on' : ''}" data-act="wo-type" data-t="${esc(n)}">${esc(n)}</button>`).join('')}</div>
-    <form id="wo-form" class="pick">
-      <div class="row"><input id="wo-min" type="number" inputmode="numeric" min="1" max="600" value="${sh.min}" aria-label="Длительность, минут"><span>мин</span>
-        <span class="muted tnum" id="wo-kcal" style="flex:1;text-align:right">≈ ${workoutKcal(sh.type, sh.min)} ккал</span></div>
-      <button class="btn" type="submit">Добавить</button></form>
-    <p class="fine">Калории — примерный расчёт по виду нагрузки и весу. Норма на день уже учитывает активность из профиля, поэтому тренировки к ней не прибавляются.</p>`;
-}
-
-/* --- мои добавки: свой список БАДов и витаминов с отметками и напоминаниями --- */
-const suppHour = w => (SUPP_WHEN.find(x => x[0] === w) || [0, 6])[1];
-const suppsSorted = () => S.supps.slice().sort((a,b) => suppHour(a.when) - suppHour(b.when));
-function suppsDue(t, h){ const ch = S.suppChecks[t] || {}; return suppsSorted().filter(s => !ch[s.id] && h >= suppHour(s.when)); }
-function suppCard(t){
-  if (!S.supps.length) return '';
-  const ch = S.suppChecks[t] || {}, list = suppsSorted(), done = list.filter(s => ch[s.id]).length;
-  return `<div class="card">
-    <div class="row between"><div><div class="eyebrow">Свой список</div><h2>Мои добавки</h2></div><span class="pill tnum">${done}/${list.length}</span></div>
-    <div class="checks">${list.map(s => `<button class="check ${ch[s.id] ? 'on' : ''}" role="checkbox" aria-checked="${!!ch[s.id]}" data-act="supp-check" data-id="${s.id}">
-      <span class="box"></span><span class="txt"><span class="when">${esc(s.when)}</span>${esc(s.name)}${s.note ? ' — ' + esc(s.note) : ''}</span></button>`).join('')}</div>
-    <button class="btn line sm" style="justify-self:start" data-act="tab" data-v="profile" data-to="supps">Изменить список</button>
-  </div>`;
-}
-function openSupp(pid){
-  const p = pid ? prod(pid) : null;
-  sh = { kind:'supp', name: p ? p.name : '', when:'Утро' }; renderSheet(); openSheet();
-}
-function renderSuppSheet(){
-  const names = PRODUCTS.filter(p => p.kind === 'supplement').map(p => p.name);
-  $('sheet-body').innerHTML = `
-    <div class="sheet-head"><div><div class="eyebrow">Мои добавки</div><h2 id="sheet-title">Добавить в список</h2></div>
-      <button class="x" data-act="sheet-close" aria-label="Закрыть">×</button></div>
-    <form id="supp-form" style="display:grid;gap:10px">
-      <label>Название<input id="supp-name" required maxlength="80" list="supp-names" autocomplete="off" value="${esc(sh.name)}" placeholder="Например, «Метабуст» или витамин D"></label>
-      <datalist id="supp-names">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
-      <div><div class="eyebrow" style="margin-bottom:6px">Когда принимать</div>
-        <div class="chips">${SUPP_WHEN.map(([w]) => `<button type="button" class="chip ${w === sh.when ? 'on' : ''}" data-act="supp-when" data-w="${esc(w)}">${esc(w)}</button>`).join('')}</div></div>
-      <label>Сколько<input id="supp-note" maxlength="40" autocomplete="off" placeholder="1 капсула, 1 стик…"></label>
-      <button class="btn" type="submit">Добавить</button></form>
-    <p class="fine">Дозировку и время приёма берите с упаковки или со страницы продукта. Если принимаете лекарства — посоветуйтесь с врачом. В выбранное время на экране «Сегодня» появится напоминание.</p>`;
-}
-
 function programCard(t){
   if (!S.program) return `<div class="card"><div><div class="eyebrow">Программа</div><h2>Программа не выбрана</h2></div>
     <p class="muted small">Выберите схему приёма продуктов, и здесь появится список на каждый день.</p>
@@ -930,9 +580,6 @@ function programCard(t){
   const pr = progById(S.program.id), day = daysBetween(S.program.start, t) + 1;
   if (day > pr.days) return `<div class="card"><div><div class="eyebrow">Программа</div><h2>«${esc(pr.name)}» завершена</h2></div>
     <p class="muted small">Все ${pr.days} дней пройдены. Посмотрите прогресс и обсудите следующий шаг с консультантом.</p>
-    ${pr.days < 30 && pr.plan.some(i => i.product === 73797) && !S.supps.some(s => s.pid === 73797) ? `<div class="tip"><b>Омега-3</b>
-      <p class="small">Курс по этикетке — 1 месяц: продолжай по 1 капсуле во время еды. Добавь её в свой список — приложение будет напоминать.</p>
-      <button class="btn line sm" style="justify-self:start" data-act="supp-open" data-id="73797">В мои добавки</button></div>` : ''}
     <div class="row wrap"><button class="btn" data-act="start-program" data-id="${pr.id}">Пройти ещё раз</button><button class="btn line" data-act="tab" data-v="progress">Мой прогресс</button></div></div>`;
   const items = pr.plan.filter(i => !i.to || day <= i.to);
   const ch = S.checks[t] || {}, done = items.filter(i => ch[i.id]).length;
@@ -941,9 +588,6 @@ function programCard(t){
     <div class="progbar"><i style="width:${(day/pr.days*100).toFixed(1)}%"></i></div>
     <div class="checks">${items.map(i => `<button class="check ${ch[i.id] ? 'on' : ''}" role="checkbox" aria-checked="${!!ch[i.id]}" data-act="check" data-id="${i.id}">
       <span class="box"></span><span class="txt"><span class="when">${esc(i.when)}</span>${esc(i.text)}</span></button>`).join('')}</div>
-    <div class="row between wrap"><p class="small muted" style="flex:1 1 180px">Коктейль или суп заменяет приём пищи, остальное — обычная еда.</p>
-      <button class="btn line sm" data-act="menu-open">Меню и рецепты</button></div>
-    ${S.profile.health === 'chronic' ? `<p class="fine">Ты ${sx('отметил','отметила')} в анкете хронические заболевания или приём лекарств: перед программой посоветуйся с врачом.</p>` : ''}
   </div>`;
 }
 
@@ -951,7 +595,6 @@ function programCard(t){
 let foodDay = todayKey();
 function renderFood(){
   const k = foodDay, list = S.meals[k] || [], tot = totals(k), g = goals(), isToday = k === todayKey();
-  const xe = c => S.profile.xe ? ' · ' + fmtN(c/12) + ' ХЕ' : '';
   $('v-food').innerHTML = `
     <header class="vh"><div><div class="eyebrow">Дневник питания</div><h1>${relDay(k)}</h1></div>
       <div class="daynav"><button data-act="day" data-d="-1" aria-label="Предыдущий день">‹</button><button data-act="day" data-d="1" aria-label="Следующий день" ${isToday ? 'disabled' : ''}>›</button></div></header>
@@ -959,95 +602,31 @@ function renderFood(){
       <div><span>Калории</span><b class="num ${tot.kcal > g.kcal ? 'bad' : ''}">${fmtN(tot.kcal,0)}</b><span>из ${fmtN(g.kcal,0)}</span></div>
       <div><span>Белки</span><b class="num">${fmtN(tot.p,0)}</b><span>из ${g.p} г</span></div>
       <div><span>Жиры</span><b class="num">${fmtN(tot.f,0)}</b><span>из ${g.f} г</span></div>
-      <div><span>Углеводы</span><b class="num">${fmtN(tot.c,0)}</b><span>из ${g.c} г${S.profile.xe ? '<br>' + fmtN(tot.c/12) + ' ХЕ' : ''}</span></div>
-    </div>
-    <div class="card row between wrap">
-      <div style="min-width:0;flex:1 1 200px"><h2>Что есть?</h2><p class="small muted">Ориентир по меню на день и простые рецепты. Коктейль ED Smart заменяет 1–2 приёма пищи, остальное — обычная еда.</p></div>
-      <button class="btn ghost" data-act="menu-open">Меню и рецепты</button>
+      <div><span>Углеводы</span><b class="num">${fmtN(tot.c,0)}</b><span>из ${g.c} г</span></div>
     </div>
     ${MEALS.map(([m,label]) => {
       const es = list.filter(e => e.meal === m), sum = es.reduce((a,e) => a + e.kcal, 0);
       return `<div class="card meal">
         <div class="row between"><h2>${label}</h2><span class="muted small tnum">${sum ? fmtN(sum,0) + ' ккал' : ''}</span></div>
         ${es.length ? `<ul class="entries">${es.map(e => `<li class="entry"><div class="e-main"><div class="e-name">${esc(e.name)}</div>
-          <div class="muted small tnum">${esc(e.amount)} · Б ${fmtN(e.p,0)} · Ж ${fmtN(e.f,0)} · У ${fmtN(e.c,0)}${xe(e.c)}</div></div>
+          <div class="muted small tnum">${esc(e.amount)} · Б ${fmtN(e.p,0)} · Ж ${fmtN(e.f,0)} · У ${fmtN(e.c,0)}</div></div>
           <div class="e-kcal num">${e.nokcal ? '—' : e.kcal}</div><button class="x" data-act="del-entry" data-id="${e.id}" aria-label="Удалить ${esc(e.name)}">×</button></li>`).join('')}</ul>`
           : `<p class="empty">Пока пусто</p>`}
         <button class="btn line sm" data-act="add-food" data-meal="${m}" data-day="${k}">+ Добавить</button>
       </div>`;
     }).join('')}
-    <p class="fine">Калорийность обычной еды ориентировочная, на 100 г готового продукта: крупы и макароны — варёные.</p>`;
-}
-
-/* --- меню и рецепты --- */
-const ing = ([a, b]) => a === 'nl' ? { nl:prod(b) } : { f:food(a), g:b };
-const ingKcal = x => x.nl ? (x.nl.kcal || 0) : x.f.kcal*x.g/100;
-/* день меню с порциями под норму: обычная еда масштабируется, продукты NL — 1 порция */
-function menuPlan(i){
-  const day = MENU_DAYS[i], norm = goals().kcal;
-  const all = MEALS.flatMap(([m]) => (day.meals[m] || []).map(ing)).filter(x => x.nl || x.f);
-  const nl = all.filter(x => x.nl).reduce((a,x) => a + ingKcal(x), 0), base = all.reduce((a,x) => a + ingKcal(x), 0);
-  const k = Math.min(1.6, Math.max(0.7, (norm - nl)/(base - nl)));
-  const meals = {};
-  for (const [m] of MEALS){
-    meals[m] = (day.meals[m] || []).map(ing).filter(x => x.nl || x.f).map(x => {
-      if (x.nl) return { nl:x.nl, name:x.nl.name, amount:'1 порция', kcal:Math.round(x.nl.kcal || 0) };
-      const g = Math.max(10, Math.round(x.g*k/10)*10);
-      return { f:x.f, g, name:x.f.name, amount:fmtN(g,0) + ' ' + x.f.unit, kcal:Math.round(x.f.kcal*g/100) };
-    });
-  }
-  const total = Object.values(meals).flat().reduce((a,x) => a + x.kcal, 0);
-  return { meals, total };
-}
-function recipeTotals(r){
-  return r.ing.map(ing).filter(x => x.f).reduce((a,x) => { const k = x.g/100;
-    return { kcal:a.kcal + x.f.kcal*k, p:a.p + x.f.p*k, f:a.f + x.f.f*k, c:a.c + x.f.c*k }; }, { kcal:0, p:0, f:0, c:0 });
-}
-function openMenu(){ sh = { kind:'menu', tab:'menu', day:foodDay, md:0 }; renderSheet(); openSheet(); }
-function renderMenuSheet(){
-  const tabs = [['menu','Меню на день'],['rec','Рецепты']];
-  $('sheet-body').innerHTML = `
-    <div class="sheet-head"><div><div class="eyebrow">Ориентир по питанию</div><h2 id="sheet-title">Меню и рецепты</h2></div>
-      <button class="x" data-act="sheet-close" aria-label="Закрыть">×</button></div>
-    <div class="seg" role="tablist">${tabs.map(([id,l]) => `<button role="tab" aria-selected="${sh.tab === id}" class="${sh.tab === id ? 'on' : ''}" data-act="menu-tab" data-t="${id}">${l}</button>`).join('')}</div>
-    ${sh.tab === 'menu' ? menuPane() : recipesPane()}
-    <p class="fine">Это ориентир, а не диета и не консультация. При заболеваниях и особом питании (без глютена, без лактозы и т. п.) опирайтесь на рекомендации врача.</p>`;
-}
-function menuPane(){
-  const plan = menuPlan(sh.md), g = goals();
-  return `<div class="chips">${MENU_DAYS.map((d,i) => `<button class="chip ${i === sh.md ? 'on' : ''}" data-act="menu-day" data-i="${i}">${esc(d.name)}</button>`).join('')}</div>
-    <p class="small muted">Порции подогнаны под твою норму: всего около <b class="tnum">${fmtN(plan.total,0)}</b> ккал из ${fmtN(g.kcal,0)}.</p>
-    ${MEALS.map(([m,label]) => { const its = plan.meals[m]; if (!its.length) return '';
-      return `<div class="infobox" style="justify-items:stretch">
-        <div class="row between"><b>${label}</b><span class="muted small tnum">${fmtN(its.reduce((a,x) => a + x.kcal, 0),0)} ккал</span></div>
-        <ul class="mlist">${its.map(x => `<li><span>${esc(x.name)}</span><span class="tnum">${esc(x.amount)} · ${x.kcal} ккал</span></li>`).join('')}</ul>
-        <button class="btn line sm" data-act="menu-add" data-m="${m}">Добавить в дневник: ${label.toLowerCase()}</button></div>`; }).join('')}
-    <div class="tip"><b>Важно</b><p class="small">Коктейль или суп ED Smart заменяет 1–2 приёма пищи в день, не больше. Остальное — обычная еда: белок (мясо, рыба, яйца, творог), овощи и немного круп.</p></div>`;
-}
-function recipesPane(){
-  return `<div style="display:grid;gap:8px">${RECIPES.map((r,i) => { const t = recipeTotals(r);
-    return `<div class="infobox" style="justify-items:stretch"><details><summary style="margin:0">${esc(r.name)} <span class="muted tnum">· ${fmtN(t.kcal,0)} ккал</span></summary>
-      <div style="display:grid;gap:8px;margin-top:10px">
-        <p class="small muted tnum">Б ${fmtN(t.p,0)} · Ж ${fmtN(t.f,0)} · У ${fmtN(t.c,0)} г на порцию</p>
-        <ul class="mlist">${r.ing.map(([n,g]) => `<li><span>${esc(n)}</span><span class="tnum">${g} ${food(n) ? food(n).unit : 'г'}</span></li>`).join('')}</ul>
-        ${r.extra ? `<p class="small muted">Ещё: ${esc(r.extra)}</p>` : ''}
-        <p class="small">${esc(r.steps)}</p>
-        <button class="btn line sm" data-act="rec-add" data-i="${i}">Добавить в дневник</button>
-      </div></details></div>`; }).join('')}</div>`;
+    <p class="fine">Калорийность обычной еды ориентировочная, на 100 г готового продукта.</p>`;
 }
 
 /* --- окно добавления еды --- */
 let sh = null;
 function openAddFood(meal, day){
-  sh = { kind:'add', meal: meal || mealByTime(), day: day || todayKey(), tab:'nl', q:'', fc:'', pick:null, pq:'', pc:'' };
+  sh = { kind:'add', meal: meal || mealByTime(), day: day || todayKey(), tab:'nl', q:'', pick:null, pq:'', pc:'' };
   renderSheet(); openSheet();
 }
 function renderSheet(){
   if (!sh) return;
   if (sh.kind === 'product') return renderProductSheet();
-  if (sh.kind === 'menu') return renderMenuSheet();
-  if (sh.kind === 'wo') return renderWorkoutSheet();
-  if (sh.kind === 'supp') return renderSuppSheet();
   const tabs = [['nl','Продукты NL'],['food','Обычная еда'],['own','Своё блюдо']];
   $('sheet-body').innerHTML = `
     <div class="sheet-head"><div><div class="eyebrow">${relDay(sh.day)}</div><h2 id="sheet-title">Добавить: ${mealName(sh.meal).toLowerCase()}</h2></div>
@@ -1069,26 +648,23 @@ function nlPane(){
     <div class="plist" id="nl-list">${nlRows()}</div></div>`;
 }
 function foodListHTML(){
-  // при поиске ищем по всем группам, иначе показываем выбранную группу
   const q = sh.q.trim().toLowerCase();
-  const list = FOODS.map((f,i) => [f,i]).filter(([f]) => q ? f.name.toLowerCase().includes(q) : !sh.fc || f.grp === sh.fc);
+  const list = FOODS.map((f,i) => [f,i]).filter(([f]) => !q || f.name.toLowerCase().includes(q));
   if (!list.length) return `<p class="empty" style="padding:10px 4px">Ничего не нашлось. Добавьте блюдо во вкладке «Своё блюдо».</p>`;
-  return list.map(([f,i]) => `<button class="frow" data-act="pick-food" data-i="${i}"><span>${esc(f.name)}</span><span class="tnum">${f.kcal} ккал / 100 ${f.unit}</span></button>`).join('');
+  return list.map(([f,i]) => `<button class="frow" data-act="pick-food" data-i="${i}"><span>${esc(f.name)}</span><span class="tnum">${f.kcal} ккал / 100 г</span></button>`).join('');
 }
 function pickHTML(){
   if (sh.pick == null) return '';
   const f = FOODS[sh.pick];
   return `<form class="pick" id="g-form">
     <b>${esc(f.name)}</b>
-    <div class="row"><input id="g-grams" type="number" inputmode="numeric" min="1" max="2000" value="${f.g}" aria-label="Количество, ${f.unit}"><span>${f.unit}</span>
+    <div class="row"><input id="g-grams" type="number" inputmode="numeric" min="1" max="2000" value="${f.g}" aria-label="Граммы"><span>г</span>
       <span class="muted tnum" id="g-calc" style="flex:1;text-align:right">${Math.round(f.kcal*f.g/100)} ккал</span></div>
     <button class="btn" type="submit">Добавить</button></form>`;
 }
 function foodPane(){
   return `<div style="display:grid;gap:10px">${pickHTML()}
     <input id="food-q" type="search" placeholder="Поиск: гречка, яйцо, творог…" value="${esc(sh.q)}" aria-label="Поиск еды">
-    <div class="chips scroll">${[['','Все'], ...FOOD_GROUPS.map(([g]) => [g,g])].map(([v,l]) => `<button class="chip ${v === sh.fc ? 'on' : ''}" data-act="food-grp" data-c="${esc(v)}">${l}</button>`).join('')}</div>
-    <p class="fine">Калорийность на 100 г. Крупы, макароны, мясо и рыба — в готовом виде: взвешивайте уже приготовленную еду.</p>
     <div class="flist" id="food-list">${foodListHTML()}</div></div>`;
 }
 function ownPane(){
@@ -1130,7 +706,6 @@ function renderProductSheet(){
       <a class="btn line sm" href="${esc(p.url)}" target="_blank" rel="noopener">Открыть страницу продукта ↗</a>
     </div>
     ${eat ? `<button class="btn wide" data-act="add-product" data-id="${p.id}">Добавить в дневник</button>` : ''}
-    ${p.kind === 'supplement' ? `<button class="btn line wide" data-act="supp-open" data-id="${p.id}">В мои добавки — с напоминанием</button>` : ''}
     <p class="fine">Название и КБЖУ — по данным NL International${when}. ${p.bad ? 'БАД, не является лекарственным средством. ' : ''}Перед применением прочитайте информацию на упаковке.</p>`;
 }
 
@@ -1152,10 +727,6 @@ function renderProgress(){
       <div class="stat"><span class="eyebrow">До цели</span><b class="num">${toGoal == null ? '—' : fmtN(Math.abs(toGoal))} <small>${toGoal == null ? '' : 'кг'}</small></b><span class="small muted">${pr.target ? 'цель ' + fmtN(pr.target) + ' кг' : 'укажите в профиле'}</span></div>
     </div>
 
-    ${pathCard()}
-    ${jumpCard(ws)}
-    ${cycleCard()}
-
     <div class="card chart">
       <div class="row between wrap"><h2>График веса</h2>
         <div class="seg" style="width:auto"><button class="${range === '30' ? 'on' : ''}" data-act="range" data-r="30">30 дней</button><button class="${range === 'all' ? 'on' : ''}" data-act="range" data-r="all">Всё время</button></div></div>
@@ -1173,7 +744,6 @@ function renderProgress(){
         <label>Бёдра, см<input id="w-hips" type="text" inputmode="decimal" autocomplete="off" step="0.5" min="30" max="250" placeholder="необязательно"></label>
       </div>
       <button class="btn" type="submit">Сохранить</button>
-      <p class="fine">Взвешивайся, когда удобно: утром, натощак, на одних и тех же весах. Талию и бёдра записывай раз в 1–2 недели — объёмы часто уходят раньше веса.</p>
       ${ws.length ? `<ul class="hist">${ws.slice(-5).reverse().map(w => `<li><div class="hd"><b class="tnum">${fmtN(w.kg)} кг</b> <span class="muted small">${fmtShort(w.d)}${w.waist ? ' · талия ' + fmtN(w.waist) + ' см' : ''}${w.hips ? ' · бёдра ' + fmtN(w.hips) + ' см' : ''}</span></div>
         <button class="x" type="button" data-act="del-weight" data-d="${w.d}" aria-label="Удалить запись за ${fmtShort(w.d)}">×</button></li>`).join('')}</ul>` : ''}
     </form>
@@ -1193,57 +763,6 @@ function renderProgress(){
     ${navigator.bluetooth ? `<div class="card" id="bt-box">${btHTML()}</div>` : ''}
 
     <p class="fine">Приложение не ставит диагнозов. При плохом самочувствии, высоком давлении или пульсе обратитесь к врачу.</p>`;
-}
-
-/* «Путь к цели»: что уже получилось — словами, и примерный срок до цели */
-function pathCard(){
-  const pr = S.profile, w = change('kg'), fc = forecast(), lines = [];
-  if (w && w.dur > 0) lines.push(`За ${fmtDur(w.dur)}: ${w.diff < 0 ? 'минус ' + fmtN(-w.diff) + ' кг' : w.diff > 0 ? 'плюс ' + fmtN(w.diff) + ' кг' : 'вес без изменений'} (было ${fmtN(w.from)}, стало ${fmtN(w.to)}).`);
-  for (const [f, l] of [['waist','Талия'],['hips','Бёдра']]){
-    const c = change(f); if (c && c.dur > 0) lines.push(`${l}: ${fmtN(c.from)} → ${fmtN(c.to)} см (${signed(c.diff)} см).`);
-  }
-  let body;
-  if (!fc) body = pr.goal === 'keep'
-    ? `<p class="small muted">Цель — держать вес. Колебания в пределах 1–2 кг — это нормально.</p>`
-    : `<p class="small muted">Укажи желаемый вес в профиле — и я посчитаю, сколько примерно времени понадобится.</p><button class="btn line sm" data-act="tab" data-v="profile">Указать цель</button>`;
-  else if (fc.done) body = `<p><b>Цель достигнута — поздравляем!</b> Теперь задача — удержать результат: поменяй цель в профиле на «Держать вес».</p>`;
-  else body = `<p>До цели <b class="tnum">${fmtN(fc.left)} кг</b>.${fc.weeks ? ` Если держаться нормы (${pr.goal === 'lose' ? 'дефицит' : 'запас'} около ${fmtN(fc.delta,0)} ккал в день), вес будет ${pr.goal === 'lose' ? 'уходить' : 'расти'} примерно на ${fmtN(fc.weekly)} кг в неделю: до цели <b>примерно ${fmtSpan(fc.weeks)}</b> (ориентир — ${fmtMonth(fc.weeks)}).` : ''}</p>
-    ${fc.paceWeeks ? `<p class="small">По твоим замерам темп сейчас ${fmtN(Math.abs(fc.pace))} кг в неделю — при нём цель примерно через ${fmtSpan(fc.paceWeeks)}.</p>` : ''}
-    <p class="fine">Это ориентир, а не обещание: в первые недели вес уходит быстрее (вода), потом медленнее, бывают остановки. Срыв отодвигает срок, но не отменяет результат.</p>`;
-  return `<div class="card"><h2>Путь к цели</h2>
-    ${lines.length ? `<ul class="notes">${lines.map(l => `<li><span>${esc(l)}</span></li>`).join('')}</ul>` : ''}
-    ${body}</div>`;
-}
-/* если вес вырос с прошлого замера — объясняем, что это нормально */
-function jumpCard(ws){
-  if (ws.length < 2 || S.profile.goal === 'gain') return '';
-  const a = ws[ws.length-2], b = ws[ws.length-1], up = r1(b.kg - a.kg);
-  if (up <= 0) return '';
-  const ci = cycleWaterDays(b.d);
-  return `<div class="tip"><b>Вес вырос на ${fmtN(up)} кг — это нормально</b>
-    ${ci ? `<p class="small">В день замера был ${ci.day}-й день цикла: перед месячными и в первые дни организм задерживает воду, и вес часто прибавляет. Через несколько дней это уходит.</p>` : ''}
-    <p class="small">Вес колеблется на 0,3–1 кг за день: вода, соль, цикл, поздний ужин. Смотри на тренд за 2–3 недели и на объёмы талии и бёдер — они часто уходят раньше веса.</p></div>`;
-}
-/* учёт цикла — только для женщин, выключается в настройках */
-function cycleCard(){
-  if (!cycleOn()) return '';
-  const t = todayKey(), ci = cycleInfo(t), ps = S.periods.slice().sort().reverse().slice(0, 3);
-  let about = `<p class="small muted">Отмечай начало месячных — так будет понятнее, почему вес иногда скачет: перед месячными и в первые дни организм задерживает воду.</p>`;
-  if (ci){
-    const late = ci.next < t;
-    const basis = ci.measured ? `средний цикл — ${nDays(ci.avg)}` : 'по циклу 28 дней; уточнится, когда отметишь следующие';
-    about = `<p class="small">Последние месячные начались ${fmtDay(ci.last)}. ${late
-      ? `Следующие ожидались примерно ${fmtDay(ci.next)} (${basis}) — отметь, когда начнутся.`
-      : `Следующие — примерно ${fmtDay(ci.next)} (${basis}).`}</p>`;
-  }
-  return `<form class="card" id="cycle-form">
-    <div class="row between"><h2>Цикл</h2>${ci ? `<span class="pill tnum">день ${ci.day}</span>` : ''}</div>
-    ${about}
-    <div class="steps-row"><input id="cycle-date" type="date" value="${t}" max="${t}" aria-label="Дата начала месячных"><button class="btn ghost" type="submit">Начались</button></div>
-    ${ps.length ? `<ul class="hist">${ps.map(d => `<li><div class="hd"><span class="tnum">${fmtDay(d)}</span></div>
-      <button class="x" type="button" data-act="del-period" data-d="${d}" aria-label="Удалить отметку за ${fmtDay(d)}">×</button></li>`).join('')}</ul>` : ''}
-    <p class="fine">Это не метод контрацепции и не медицинский прогноз: овуляцию приложение не рассчитывает. Если цикл беспокоит — обратись к гинекологу. Выключить учёт цикла можно в «Профиле» → «Настройки».</p>
-  </form>`;
 }
 
 function weightChart(all, target){
@@ -1325,13 +844,8 @@ async function btConnect(){
 }
 
 /* ================= ПРОДУКТЫ ================= */
-let catQ = '', catC = '', catG = '';
-/* в рубрике сначала БАДы, потом питание: NL относит к «Антистресс, сон» и все коктейли ED Smart */
-const KIND_ORDER = { supplement:0, food:1, other:2 };
-function catalogList(){
-  const list = prodFilter(PRODUCTS, catQ, catC).filter(p => !catG || (p.goals || []).includes(catG));
-  return list.sort(catG ? (a,b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] : (a,b) => (a.kind === 'other') - (b.kind === 'other'));
-}
+let catQ = '', catC = '';
+function catalogList(){ return prodFilter(PRODUCTS, catQ, catC).sort((a,b) => (a.kind === 'other') - (b.kind === 'other')); }
 function catalogRows(list){
   if (!list.length) return `<p class="empty">Ничего не нашлось. Попробуйте другое слово.</p>`;
   return list.map(p => `<button class="prow ${p.kind === 'other' ? 'dim' : ''}" data-act="open-product" data-id="${p.id}">${tileHTML(p)}
@@ -1349,8 +863,6 @@ function renderProducts(){
         <div class="row between"><h2>${esc(p.name)}</h2><span class="pill">${p.days} дн.</span></div>
         <p class="small muted">${esc(p.about)}</p>
         <ul class="small" style="margin:0;padding-left:18px;display:grid;gap:2px">${p.plan.map(i => `<li><b>${esc(i.when)}:</b> ${esc(i.text)}</li>`).join('')}</ul>
-        <details><summary style="margin:0">Что понадобится на ${nDays(p.days)}</summary>
-          <ul class="small" style="margin:8px 0 0;padding-left:18px;display:grid;gap:6px">${programBasket(p).map(b => `<li><a href="${esc(b.p.url)}" target="_blank" rel="noopener">${esc(b.p.name)} ↗</a><br><span class="muted">${esc(b.need)}</span></li>`).join('')}</ul></details>
         ${active && day <= p.days
           ? `<div class="row between wrap"><span class="pill">Идёт · день ${day} из ${p.days}</span><button class="btn line sm" data-act="stop-program">Остановить</button></div>`
           : `<button class="btn ${active ? 'line' : ''}" data-act="start-program" data-id="${p.id}">${active ? 'Начать заново' : 'Начать программу'}</button>`}
@@ -1361,9 +873,6 @@ function renderProducts(){
     <div class="prodpage" style="display:grid;gap:10px">
       <input id="cat-q" type="search" placeholder="Поиск по ${PRODUCTS.length} продуктам" value="${esc(catQ)}" aria-label="Поиск продукта">
       ${catChips('cat-cat', catC)}
-      <div class="eyebrow" id="goal-chips">По теме — рубрики сайта NL</div>
-      <div class="chips scroll">${[['','Все темы'], ...GOAL_RUBRICS.map(g => [g,g])].map(([v,l]) => `<button class="chip ${v === catG ? 'on' : ''}" data-act="cat-goal" data-g="${esc(v)}">${esc(l)}</button>`).join('')}</div>
-      ${catG ? `<p class="fine">Рубрика «${esc(catG)}» — как на сайте NL. Это не рекомендация: подходящий продукт поможет выбрать консультант, а перед приёмом прочитайте инструкцию на странице продукта.</p>` : ''}
     </div>
     <div class="plist" id="cat-list">${catalogRows(list)}</div>
     <p class="fine">Данные с сайта NL International${NL_META.collected ? ' на ' + new Date(NL_META.collected).toLocaleDateString('ru-RU') : ''}. Продукция не является лекарственным средством. Перед началом программы посоветуйтесь с врачом, если у вас есть хронические заболевания, беременность или кормление грудью.</p>
@@ -1417,27 +926,6 @@ function renderProfile(){
       <div class="grid2"><button class="btn ghost" data-act="bot-open" data-mode="survey">Пройти анкету</button><button class="btn line" data-act="bot-open" data-mode="faq">Частые вопросы</button></div>
     </div>
 
-    <div class="card" id="supps">
-      <h2>Мои добавки</h2>
-      <p class="small muted">Свой список БАДов и витаминов: они появятся на экране «Сегодня» с галочками, а в выбранное время — напоминание.</p>
-      ${S.supps.length ? `<ul class="entries">${suppsSorted().map(s => { const pp = s.pid && prod(s.pid);
-        return `<li class="entry"><div class="e-main"><div class="e-name">${esc(s.name)}</div><div class="muted small">${esc(s.when)}${s.note ? ' · ' + esc(s.note) : ''}${pp ? ` · <a href="${esc(pp.url)}" target="_blank" rel="noopener" style="color:var(--accent)">на сайте NL ↗</a>` : ''}</div></div>
-        <button class="x" data-act="supp-del" data-id="${s.id}" aria-label="Удалить ${esc(s.name)}">×</button></li>`; }).join('')}</ul>` : ''}
-      <button class="btn ghost" data-act="supp-open">+ Добавить добавку</button>
-    </div>
-
-    <div class="card">
-      <h2>Настройки</h2>
-      <div class="setrow"><span>Подсказки «На сегодня» и совет дня</span>
-        <button class="btn sm ${p.hints === false ? 'line' : 'ghost'}" data-act="toggle-hints" aria-pressed="${p.hints !== false}">${p.hints === false ? 'Выключены' : 'Включены'}</button></div>
-      <label>Напоминать о взвешивании<select id="st-weigh">${opt(WEIGH_EVERY, p.weighEvery ?? 7)}</select></label>
-      <div class="setrow"><span>Хлебные единицы (ХЕ) в дневнике<br><span class="small muted">1 ХЕ = 12 г углеводов</span></span>
-        <button class="btn sm ${p.xe ? 'ghost' : 'line'}" data-act="toggle-xe" aria-pressed="${!!p.xe}">${p.xe ? 'Показывать' : 'Не показывать'}</button></div>
-      ${p.sex === 'f' ? `<div class="setrow"><span>Учёт цикла в «Прогрессе»</span>
-        <button class="btn sm ${p.cycle === false ? 'line' : 'ghost'}" data-act="toggle-cycle" aria-pressed="${p.cycle !== false}">${p.cycle === false ? 'Выключен' : 'Включён'}</button></div>` : ''}
-      <p class="fine">Напоминания показываются на экране «Сегодня», когда вы открываете приложение.</p>
-    </div>
-
     <div class="card">
       <h2>Мои данные</h2>
       <p class="small muted">Все записи хранятся только на этом телефоне. Никто, кроме вас, их не видит.</p>
@@ -1481,7 +969,7 @@ const ED_URL = 'https://ng.nlstar.com/ru/catalog/products/healthy-diet';
 const FAQ = [
   { t:'О приложении', items:[
     { q:'Как пользоваться приложением?', a:[
-      'Всё просто:\n• «Сегодня» — подсказки на день, калории, программа, вода, шаги и тренировки, самочувствие и сон.\n• «Питание» — дневник: обычная еда и продукты NL, а ещё меню и рецепты.\n• «Прогресс» — вес, объёмы, путь к цели, пульс и давление.\n• «Продукты» — каталог NL с КБЖУ и программы.\n• «Профиль» — твои данные, норма и настройки.',
+      'Всё просто:\n• «Сегодня» — калории за день, вода, программа, самочувствие и сон.\n• «Питание» — дневник: добавляй обычную еду и продукты NL.\n• «Прогресс» — вес, график, пульс и давление.\n• «Продукты» — каталог NL с КБЖУ и программы.\n• «Профиль» — твои данные и норма.',
       'Совет: записывай еду сразу после приёма пищи — так проще ничего не забыть.' ] },
     { q:'Как добавить еду?', a:[
       'Нажми «Добавить еду» на экране «Сегодня» или «+ Добавить» у нужного приёма пищи в разделе «Питание».',
@@ -1529,15 +1017,8 @@ const FAQ = [
     { q:'Можно ли есть после шести?', a:[
       'Важнее общая калорийность за день, чем время. Последний приём пищи удобно делать за 2–3 часа до сна.' ] },
     { q:'А как же алкоголь?', a:[
-      'В алкоголе много калорий: в бокале сухого вина около 100 ккал, в бутылке пива — около 200. Его тоже стоит записывать — вино и пиво есть в «Обычной еде» → «Напитки».',
-      'И не забывай про закуски: после пары бокалов их обычно перестают считать.',
-      'Во время программы с продуктами лучше от алкоголя отказаться.' ] },
-    { q:'Что есть, кроме коктейлей?', a:[
-      'Коктейль или суп ED Smart заменяет 1–2 приёма пищи в день, не больше. Остальное — обычная еда: белок (мясо, рыба, яйца, творог), овощи и немного круп.',
-      'Примеры меню на день и простые рецепты — в разделе «Питание» → «Меню и рецепты». Порции там подогнаны под твою норму.' ] },
-    { q:'Что такое хлебные единицы (ХЕ)?', a:[
-      '1 ХЕ — это 12 г углеводов. Хлебные единицы обычно считают люди с сахарным диабетом.',
-      'Показ ХЕ в дневнике включается в «Профиле» → «Настройки». Сколько ХЕ нужно именно тебе, решает только лечащий врач — приложение этого не рассчитывает.' ] }
+      'В алкоголе много калорий: в бокале сухого вина около 120 ккал. Его тоже стоит записывать.',
+      'Во время программы с продуктами лучше от алкоголя отказаться.' ] }
   ] },
   { t:'Коктейли и супы ED Smart', items:[
     { q:'Как приготовить коктейль ED Smart?', a:[
@@ -1561,20 +1042,12 @@ const FAQ = [
   ] },
   { t:'Программы', items:[
     { q:'Какие есть программы?', a:[
-      '«Старт за 7 дней» — мягкий вход: коктейль на завтрак, суп ED Smart на ужин, омега-3 и фиточай. Курс Омеги-3 по этикетке — 1 месяц, поэтому её продолжают после программы.',
-      '«Лёгкость за 14 дней» — «ДрейнЭффект» утром, коктейль на завтрак, коллаген и суп ED Smart на ужин.',
-      '«Ритм за 21 день» — коктейль на завтрак, «ДрейнЭффект» до обеда, коллаген 20 дней и фиточай; обед и ужин — обычная еда.',
+      '«Старт за 7 дней» — мягкий вход: коктейль на завтрак, суп ED Smart на ужин, омега-3 и фиточай.',
       '«В форме за 30 дней» — коктейль на завтрак и суп на ужин, омега-3 каждый день и коллаген курсом 20 дней.',
       'Это примеры схем по инструкциям NL. Подходящую программу подберёт твой консультант.' ] },
     { q:'Как начать программу?', a:[
       '«Продукты» → выбери программу → «Начать программу». Или пройди анкету — в конце я предложу программу.',
       'Список на каждый день появится на экране «Сегодня».' ] },
-    { q:'Как добавить свои БАДы и витамины?', a:[
-      '«Профиль» → «Мои добавки» → «+ Добавить добавку»: впиши название (продукты NL подсказываются), время приёма и сколько. Или нажми «В мои добавки» в карточке БАДа в «Продуктах».',
-      'Добавки появятся на экране «Сегодня» с галочками, а в выбранное время — напоминание в карточке «На сегодня». Дозировку бери с упаковки.' ] },
-    { q:'Что купить для программы?', a:[
-      '«Продукты» → в карточке программы нажми «Что понадобится»: там продукты со ссылками на сайт NL и сколько упаковок нужно на всю программу.',
-      'Подобрать продукты именно под тебя поможет твой консультант NL.' ] },
     { q:'Как отмечать приём продуктов?', a:[
       'На экране «Сегодня» нажимай на пункт программы — появится галочка. Коктейли и супы при этом сами попадают в дневник с калориями.' ] },
     { q:'Что если я пропустил день?', a:[
@@ -1590,16 +1063,8 @@ const FAQ = [
       'Пей равномерно в течение дня. В жару и в дни тренировок воды нужно больше.',
       'Отмечай стаканы на экране «Сегодня» — так видно, сколько осталось.' ] },
     { q:'Как правильно взвешиваться?', a:[
-      'Как тебе удобно: кто-то взвешивается каждый день, кто-то раз в неделю. Главное — утром, натощак, на одних и тех же весах.',
-      'Колебания 0,3–1 кг за день — это нормально: вода, соль, цикл, поздний ужин. Смотри на график за несколько недель и на объёмы, а не на одно число.',
-      'Как часто напоминать о взвешивании, можно выбрать в «Профиле» → «Настройки».' ] },
-    { q:'Когда я дойду до цели?', a:[
-      'Открой «Прогресс» → «Путь к цели»: там примерный срок по твоей норме, а когда накопятся замеры за 2 недели — и по твоему реальному темпу.',
-      'Это ориентир: вес уходит неравномерно, бывают остановки. Срыв отодвигает срок, но не отменяет результат.' ] },
-    { q:'Почему после 45 худеть сложнее?', a:[
-      'С возрастом обмен веществ замедляется, а у женщин в период пременопаузы и менопаузы меняется гормональный фон. Поэтому вес часто уходит медленнее — это нормально.',
-      'Помогают белок в каждом приёме пищи, силовые упражнения и хороший сон. Темп 0,3–0,5 кг в неделю — хороший результат.',
-      'Если беспокоит самочувствие — обратись к врачу.' ] },
+      'Лучше 1–2 раза в неделю: утром, натощак, на одних и тех же весах.',
+      'Вес колеблется изо дня в день из-за воды и соли, поэтому смотри на график за несколько недель, а не на одно число.' ] },
     { q:'С какой скоростью нормально худеть?', a:[
       'Обычно безопасным считают темп около 0,5–1 кг в неделю. В первую неделю вес часто уходит быстрее из-за воды — это нормально.' ] },
     { q:'Что делать, если вес стоит?', a:[
@@ -1609,9 +1074,6 @@ const FAQ = [
     { q:'Нужно ли заниматься спортом?', a:[
       'Движение помогает: тратит калории и поддерживает мышцы. Начни с прогулок и того, что нравится.',
       'Если стал двигаться больше, поменяй уровень активности в «Профиле» — норма пересчитается.' ] },
-    { q:'Как записать шаги и тренировки?', a:[
-      'На экране «Сегодня», в карточке «Активность»: впиши число шагов из приложения «Здоровье» (iPhone) или Google Fit (Android), а тренировку добавь кнопкой «+ Тренировка».',
-      'Калории тренировки — примерный расчёт. К норме на день они не прибавляются: норма уже учитывает уровень активности из профиля.' ] },
     { q:'Зачем замеры талии и бёдер?', a:[
       'Бывает, что вес стоит, а объёмы уходят. Записывай талию и бёдра раз в 1–2 недели вместе с весом в «Прогрессе» — так прогресс виднее.' ] }
   ] },
@@ -1619,9 +1081,6 @@ const FAQ = [
     { q:'Можно ли беременным и кормящим?', a:[
       'Для многих продуктов NL беременность и кормление грудью — противопоказание. Смотри противопоказания на упаковке и на странице продукта.',
       'Программы с продуктами в этот период не подходят. Любые продукты — только после консультации с врачом.' ] },
-    { q:'Зачем отмечать цикл?', a:[
-      'Чтобы понимать колебания веса: перед месячными и в первые дни организм задерживает воду, и вес часто прибавляет. Это не жир — через несколько дней уходит.',
-      'Отмечай начало месячных в «Прогрессе» → «Цикл». Овуляцию приложение не рассчитывает: это не метод контрацепции. Если цикл беспокоит — обратись к гинекологу.' ] },
     { q:'Можно ли при хронических заболеваниях?', a:[
       'Перед любой программой с продуктами посоветуйся с врачом и прочитай противопоказания на странице продукта.' ] },
     { q:'Можно ли БАДы вместе с лекарствами?', a:[
@@ -1642,9 +1101,6 @@ const FAQ = [
       'Только в официальных магазинах NL — в интернет-магазине и магазинах компании. Приложение ничего не продаёт.',
       { html:`<a href="${SHOP_URL}" target="_blank" rel="noopener">Интернет-магазин NL ↗</a>` },
       'Подобрать продукты поможет твой консультант NL.' ] },
-    { q:'Как найти продукты по теме (сон, для женщин…)?', a:[
-      '«Продукты» → строка «По теме — рубрики сайта NL»: «Антистресс, сон», «Для неё», «Для него», «Работа мозга». Продукты разложены так же, как на сайте NL.',
-      'Это не рекомендация конкретного продукта: подобрать подходящий поможет консультант, а перед приёмом прочитай инструкцию на странице продукта.' ] },
     { q:'Кто такой консультант NL?', a:[
       'Это партнёр NL, который помогает подобрать продукты и программу, отвечает на вопросы и поддерживает на марафоне.',
       'Если у тебя его нет, спроси человека, который дал тебе ссылку на «Тонус».' ] },
@@ -1734,10 +1190,6 @@ async function survey(){
       check: v => d.goal === 'lose' ? (v < d.weight || 'Для снижения веса цель должна быть меньше текущего веса')
                                     : (v > d.weight || 'Для набора веса цель должна быть больше текущего веса') } });
   }
-  await botSay('Вес колеблется изо дня в день — это нормально, важнее тренд за несколько недель. Как часто напоминать тебе о взвешивании?');
-  d.weighEvery = await waitAnswer({ replies: WEIGH_EVERY.map(([v,l]) => [l, v]), col:true });
-  await botSay('Как у тебя со сном и энергией?');
-  d.concern = await waitAnswer({ replies: CONCERNS.map(([v,l]) => [l, v]), col:true });
   await botSay('И важный вопрос о здоровье. Что-то из этого про тебя?');
   const health = [['Хронические заболевания или приём лекарств','chronic'],['Ничего из этого','none']];
   if (d.sex === 'f') health.unshift(['Беременность или кормление грудью','preg']);
@@ -1745,20 +1197,12 @@ async function survey(){
   if (!alive()) return;
 
   // сохраняем профиль и считаем норму
-  Object.assign(S.profile, { name:d.name, sex:d.sex, age:d.age, height:d.height, activity:d.activity, goal:d.goal, target:d.target,
-    weighEvery:d.weighEvery, concern:d.concern, health:d.health });
+  Object.assign(S.profile, { name:d.name, sex:d.sex, age:d.age, height:d.height, activity:d.activity, goal:d.goal, target:d.target });
   upsertWeight(todayKey(), r1(d.weight));
   S.onboarded = true; save();
-  const g = goals(), fc = forecast();
+  const g = goals();
   await botSay(`Готово, ${d.name}! Твоя норма на день:\n• ${fmtN(g.kcal,0)} ккал\n• белок — ${g.p} г\n• вода — ${fmtN(g.water/1000,1)} л`,
     'Расчёт по формуле Миффлина — Сан Жеора с учётом активности и цели. Это ориентир, а не медицинская рекомендация.');
-  if (fc && fc.weeks) await botSay(`Если держаться нормы, до цели ${fmtN(fc.left)} кг — примерно ${fmtSpan(fc.weeks)}. Это честный ориентир: вес уходит неравномерно, бывают остановки — это нормально. Следить за путём можно в «Прогрессе».`);
-  if (d.sex === 'f' && d.age >= 45) await botSay('После 45 вес часто уходит медленнее — это нормально, тело перестраивается. Помогают белок в каждом приёме пищи, силовые упражнения и хороший сон. Темп 0,3–0,5 кг в неделю — хороший результат.');
-  const tips = { sleep:'Про сон: проветривай спальню, ложись в одно и то же время и откладывай телефон за час до сна.',
-    energy:'Про энергию: не пропускай завтрак, пей воду по норме и выходи на короткие прогулки.',
-    stress:'Когда тревожно, помогает медленное дыхание: вдох на 4 счёта, выдох на 6. Ещё — прогулка, тёплый душ, спокойная музыка.' }[d.concern];
-  if (tips) await botSay(tips + ' Такие советы будут на экране «Сегодня». Если это беспокоит долго — обратись к врачу.'
-    + (TIP_RUBRIC[d.concern] ? ` А продукты NL по этой теме собраны в «Продуктах» — рубрика сайта NL «${TIP_RUBRIC[d.concern]}».` : ''));
 
   let offer = true;
   if (d.health === 'preg'){
@@ -1768,7 +1212,7 @@ async function survey(){
     offer = false;
     await botSay('Программы с продуктами рассчитаны на взрослых, поэтому их я не предлагаю. Дневник питания, воды и веса — пожалуйста.');
   } else if (d.health === 'chronic'){
-    await botSay(`Ты ${sx('отметил','отметила')} хронические заболевания или приём лекарств. Перед началом любой программы с продуктами обязательно посоветуйся с врачом — особенно если принимаешь лекарства. Я не врач и не консультирую.`);
+    await botSay('Перед началом любой программы с продуктами обязательно посоветуйся с врачом.');
   }
   if (offer){
     await botSay('Хочешь начать программу с продуктами NL? На экране «Сегодня» появится список: что и когда принимать.');
@@ -1777,8 +1221,7 @@ async function survey(){
       const pr = progById(pid), t = todayKey();
       S.program = { id:pid, start:t }; S.checks[t] = {}; save();
       await botSay(`Начинаем «${pr.name}»:\n` + pr.plan.map(i => `• ${i.when}: ${i.text}`).join('\n'),
-        'Что понадобится на всю программу:\n' + programBasket(pr).map(b => `• ${b.p.name} — ${b.need}`).join('\n'),
-        'Перед началом прочитай инструкцию к каждому продукту. Ссылки на продукты — в «Продуктах», в карточке программы. Отмечать приём можно на экране «Сегодня».');
+        'Перед началом прочитай инструкцию к каждому продукту. Отмечать приём можно на экране «Сегодня».');
     }
   }
   await botSay('Всё готово! Поменять данные можно в «Профиле», а ответы на частые вопросы — у меня в разделе «Есть вопрос?».');
@@ -1876,48 +1319,12 @@ document.addEventListener('click', e => {
     case 'pick-meal': sh.meal = d.m; renderSheet(); break;
     case 'sheet-tab': sh.tab = d.t; sh.pick = null; renderSheet(); break;
     case 'pick-food': sh.pick = +d.i; renderSheet(); { const g = $('g-grams'); if (g){ g.focus(); g.select(); } } break;
-    case 'food-grp': sh.fc = d.c; sh.q = ''; sh.pick = null; renderSheet(); break;
-    case 'wo-open': closeSheet(); openWorkout(); break;
-    case 'wo-type': { const m = Number($('wo-min').value); if (m > 0) sh.min = m; sh.type = d.t; renderSheet(); break; }
-    case 'del-wo': {
-      const list = S.workouts[t] || [], i = list.findIndex(w => w.id === d.id); if (i < 0) break;
-      const [gone] = list.splice(i, 1); commit();
-      toast(`Удалено: ${gone.type}`, () => { list.splice(i, 0, gone); S.workouts[t] = list; commit(); }); break; }
-    case 'notes-hide': S.notesHidden = t; commit(); toast('Скрыто до завтра. Выключить совсем можно в «Профиле»'); break;
-    case 'toggle-hints': S.profile.hints = S.profile.hints === false; commit(); break;
-    case 'toggle-xe': S.profile.xe = !S.profile.xe; commit(); break;
-    case 'supp-open': closeSheet(); openSupp(d.id); break;
-    case 'toggle-cycle': S.profile.cycle = S.profile.cycle === false; commit(); break;
-    case 'del-period': {
-      const i = S.periods.indexOf(d.d); if (i < 0) break;
-      S.periods.splice(i, 1); commit();
-      toast(`Удалена отметка за ${fmtDay(d.d)}`, () => { S.periods.push(d.d); commit(); }); break; }
-    case 'supp-when': sh.when = d.w; document.querySelectorAll('[data-act="supp-when"]').forEach(c => c.classList.toggle('on', c.dataset.w === d.w)); break;
-    case 'supp-check': { const day = S.suppChecks[t] || (S.suppChecks[t] = {}); if (day[d.id]) delete day[d.id]; else day[d.id] = true; commit(); break; }
-    case 'supp-del': {
-      const i = S.supps.findIndex(s => s.id === d.id); if (i < 0) break;
-      const [gone] = S.supps.splice(i, 1); commit();
-      toast(`Удалено: ${gone.name}`, () => { S.supps.splice(i, 0, gone); commit(); }); break; }
-    case 'menu-open': closeSheet(); openMenu(); break;
-    case 'menu-tab': sh.tab = d.t; renderSheet(); break;
-    case 'menu-day': sh.md = +d.i; renderSheet(); break;
-    case 'menu-add': {
-      const items = menuPlan(sh.md).meals[d.m], list = S.meals[sh.day] || (S.meals[sh.day] = []);
-      items.forEach(x => { const en = x.nl ? entryFromProduct(x.nl.id, d.m, 1) : entryFromFood(x.f, d.m, x.g); if (en) list.push(en); });
-      commit(); toast(`${mealName(d.m)} добавлен в дневник: ${fmtN(items.reduce((a,x) => a + x.kcal, 0),0)} ккал`); break; }
-    case 'rec-add': {
-      const r = RECIPES[+d.i], s = recipeTotals(r);
-      (S.meals[sh.day] || (S.meals[sh.day] = [])).push({ id:uid(), meal:mealByTime(), name:r.name, amount:'1 порция',
-        kcal:Math.round(s.kcal), p:r1(s.p), f:r1(s.f), c:r1(s.c) });
-      commit(); toast(`Добавлено: ${r.name}, ${Math.round(s.kcal)} ккал`); break; }
     case 'add-product': {
       const meal = sh && sh.kind === 'add' ? sh.meal : mealByTime(), day = sh && sh.kind === 'add' ? sh.day : t;
       const en = entryFromProduct(d.id, meal, 1); closeSheet(); if (en) addEntry(day, en); break; }
     case 'open-product': openProduct(d.id); break;
     case 'nl-cat': sh.pc = d.c; renderSheet(); break;
     case 'cat-cat': catC = d.c; renderProducts(); break;
-    case 'cat-goal': catG = d.g; renderProducts(); break;
-    case 'goal-open': catG = d.g; catC = ''; catQ = ''; closeSheet(); show('products', 'goal-chips'); break;
     case 'start-program':
       S.program = { id:d.id, start:t }; S.checks[t] = {}; save(); closeSheet();
       show('today'); toast(`Программа «${progById(d.id).name}» начата`); break;
@@ -1968,23 +1375,6 @@ document.addEventListener('submit', e => {
       if (ok !== true){ hint.textContent = ok; return; }
       answer(sp.step && sp.step < 1 ? r1(v) : Math.round(v), fmtN(v) + (sp.unit ? ' ' + sp.unit : ''));
     }
-  } else if (f.id === 'cycle-form'){
-    let d = $('cycle-date').value || t; if (d > t) d = t;
-    if (!S.periods.includes(d)) S.periods.push(d);
-    commit(); toast(`Отмечено: начало месячных ${fmtDay(d)}`);
-  } else if (f.id === 'supp-form'){
-    const name = $('supp-name').value.trim(); if (!name) return;
-    const p = PRODUCTS.find(x => x.name === name);
-    S.supps.push({ id:uid(), name, pid: p ? p.id : null, when:sh.when, note:$('supp-note').value.trim() });
-    closeSheet(); commit(); toast(`Добавлено в мои добавки: ${name}`);
-  } else if (f.id === 'steps-form'){
-    const n = num('steps-in'); if (!(n >= 0 && n <= 100000)) return;
-    S.steps[t] = Math.round(n); commit(); toast(`Записано: ${fmtN(n,0)} ${plural(Math.round(n), 'шаг', 'шага', 'шагов')}`);
-  } else if (f.id === 'wo-form'){
-    const min = num('wo-min'); if (!(min > 0 && min <= 600)) return;
-    const w = { id:uid(), type:sh.type, min:Math.round(min), kcal:workoutKcal(sh.type, min) };
-    (S.workouts[t] || (S.workouts[t] = [])).push(w);
-    closeSheet(); commit(); toast(`Тренировка добавлена: ${w.type}, ${w.min} мин`);
   } else if (f.id === 'g-form'){
     const g = num('g-grams'); if (!(g > 0)) return;
     const en = entryFromFood(FOODS[sh.pick], sh.meal, g), day = sh.day; closeSheet(); addEntry(day, en);
@@ -2002,13 +1392,9 @@ document.addEventListener('input', e => {
   else if (el.id === 'nl-q' && sh){ sh.pq = el.value; $('nl-list').innerHTML = nlRows(); }
   else if (el.id === 'cat-q'){ catQ = el.value; const list = catalogList(); $('cat-list').innerHTML = catalogRows(list); $('cat-count').textContent = list.length + ' из ' + PRODUCTS.length; }
   else if (el.id === 'g-grams' && sh && sh.pick != null){ const g = Number(el.value) || 0; $('g-calc').textContent = Math.round(FOODS[sh.pick].kcal*g/100) + ' ккал'; }
-  else if (el.id === 'wo-min' && sh && sh.kind === 'wo'){ sh.min = Number(el.value) || 0; $('wo-kcal').textContent = '≈ ' + workoutKcal(sh.type, sh.min) + ' ккал'; }
   else if (el.closest && el.closest('#pf') && el.id !== 'pf-weight') onProfileInput(el);
 });
-document.addEventListener('change', e => {
-  if (e.target.id === 'pf-weight') onProfileInput(e.target);
-  else if (e.target.id === 'st-weigh'){ S.profile.weighEvery = Number(e.target.value); save(); }
-});
+document.addEventListener('change', e => { if (e.target.id === 'pf-weight') onProfileInput(e.target); });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (!$('chat').hidden) closeBot(); else if (!$('sheet').hidden) closeSheet();
