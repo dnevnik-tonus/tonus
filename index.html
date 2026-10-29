@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Тонус">
+<meta name="author" content="Дмитрий и Екатерина Мёдовы, бизнес-партнёры NL">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script>window.APP_MODE = 'release';</script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -304,6 +305,8 @@ details p{margin-top:6px}
    kind: 'food' — питание, 'supplement' — БАД, 'other' — не едят.
    kcal/p/f/c — на порцию (basis); null — производитель не указал.
    ================================================================ */
+/* Автор: по Стандартам NL (п. 6.2.2) ресурс партнёра подписывается его именем */
+const AUTHOR = 'Дмитрий и Екатерина Мёдовы, бизнес-партнёры NL';
 const PRODUCTS = window.NL_PRODUCTS || [];
 const NL_META = window.NL_META || {};
 const CATS = ['Здоровое питание','Похудение','БАД и адаптогены','Коллаген','Для детей','Антиэйдж'];
@@ -529,7 +532,8 @@ function renderToday(){
       <div class="moods" role="radiogroup" aria-label="Самочувствие">${MOODS.map((m,i) => `<button class="mood ${S.mood[t] === i+1 ? 'on' : ''}" role="radio" aria-checked="${S.mood[t] === i+1}" data-act="mood" data-n="${i+1}"><span class="num">${i+1}</span><small>${m}</small></button>`).join('')}</div>
       <div class="row between"><span>Сон прошлой ночью</span>
         <div class="stepper"><button data-act="sleep" data-d="-0.5" aria-label="Меньше сна">−</button><b class="num">${fmtN(S.sleep[t] || 0)} ч</b><button data-act="sleep" data-d="0.5" aria-label="Больше сна">+</button></div></div>
-    </div>`;
+    </div>
+    <p class="fine">«Тонус» — автор: ${esc(AUTHOR)}. Не является официальным приложением NL International.</p>`;
 }
 
 function programCard(t){
@@ -839,7 +843,8 @@ function renderProducts(){
       ${catChips('cat-cat', catC)}
     </div>
     <div class="plist" id="cat-list">${catalogRows(list)}</div>
-    <p class="fine">Данные с сайта NL International${NL_META.collected ? ' на ' + new Date(NL_META.collected).toLocaleDateString('ru-RU') : ''}. Продукция не является лекарственным средством. Перед началом программы посоветуйтесь с врачом, если у вас есть хронические заболевания, беременность или кормление грудью.</p>`;
+    <p class="fine">Данные с сайта NL International${NL_META.collected ? ' на ' + new Date(NL_META.collected).toLocaleDateString('ru-RU') : ''}. Продукция не является лекарственным средством. Перед началом программы посоветуйтесь с врачом, если у вас есть хронические заболевания, беременность или кормление грудью.</p>
+    <p class="fine">Автор приложения: ${esc(AUTHOR)}.</p>`;
 }
 
 /* ================= ПРОФИЛЬ ================= */
@@ -891,7 +896,12 @@ function renderProfile(){
            <div class="grid2"><button class="btn danger" data-act="reset-yes">Удалить</button><button class="btn line" data-act="reset-no">Отмена</button></div>`
         : `<button class="btn line" data-act="reset">Удалить все мои записи</button>`}
     </div>
-    <p class="fine">Приложение независимого партнёра NL International. Не является официальным приложением компании. Продукция не является лекарственным средством.</p>`;
+    <div class="card">
+      <h2>О приложении</h2>
+      <p class="small">Автор: <b>${esc(AUTHOR)}</b></p>
+      <p class="small muted">«Тонус» — бесплатный дневник питания, веса и здоровья. Не является официальным приложением NL International. Покупка продукции — только в официальных магазинах NL.</p>
+    </div>
+    <p class="fine">Продукция не является лекарственным средством.</p>`;
 }
 function onProfileInput(el){
   const p = S.profile, v = el.value;
