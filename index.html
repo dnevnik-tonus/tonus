@@ -133,6 +133,17 @@ label{display:grid;gap:4px;font-size:13px;color:var(--muted);font-weight:500;min
 .mini .num small{font-family:var(--f-body);font-size:13px;color:var(--muted)}
 .good{color:var(--good)} .bad{color:var(--bad)}
 
+/* mood & sleep */
+.moods{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.mood{appearance:none;border:0;background:var(--bg);border-radius:12px;padding:8px 2px;display:grid;gap:2px;justify-items:center;cursor:pointer;min-height:56px}
+.mood .num{font-size:18px}
+.mood small{font-size:10.5px;color:var(--muted);line-height:1.15;text-align:center}
+.mood.on{background:var(--accent);color:var(--accent-ink)}
+.mood.on small{color:var(--accent-ink)}
+.stepper{display:flex;align-items:center;gap:4px;background:var(--bg);border-radius:12px;padding:3px}
+.stepper button{appearance:none;border:0;background:var(--surface);width:38px;height:38px;border-radius:10px;font-size:20px;cursor:pointer;box-shadow:var(--shadow)}
+.stepper b{min-width:62px;text-align:center}
+
 /* food diary */
 .daynav{display:flex;align-items:center;gap:4px}
 .daynav button{appearance:none;border:0;background:var(--surface);box-shadow:var(--shadow);width:40px;height:40px;border-radius:12px;font-size:20px;cursor:pointer}
@@ -195,6 +206,13 @@ details p{margin-top:6px}
 .hist li{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
 .hist li:first-child{border-top:0}
 .hist .hd{flex:1;min-width:0}
+
+/* bluetooth */
+.bt-live{display:flex;align-items:center;gap:14px}
+.heart{width:44px;height:44px;flex:none;color:var(--bad)}
+.heart.beat{animation:beat 1s infinite}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.15)}30%{transform:scale(1)}}
+.bt-bpm{font-size:40px;line-height:1}
 
 /* consultant */
 .how{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
@@ -329,6 +347,7 @@ const FOODS = [
 
 const MEALS = [['breakfast','Завтрак'],['lunch','Обед'],['dinner','Ужин'],['snack','Перекус']];
 const WHEN_TO_MEAL = { 'Утро':'breakfast', 'Обед':'lunch', 'Ужин':'dinner', 'Перекус':'snack' };
+const MOODS = ['Плохо','Так себе','Средне','Хорошо','Отлично'];
 const ACTIVITY = [[1.2,'Мало движения'],[1.375,'Лёгкая активность'],[1.55,'Спорт 3–5 раз в неделю'],[1.725,'Высокая активность']];
 const GOALS = [['lose','Снизить вес'],['keep','Держать вес'],['gain','Набрать вес']];
 const VIEWS = ['today','food','progress','products','profile'];
@@ -358,7 +377,7 @@ const KEY = 'moy-balans.v2';
 function blank(){
   return { v:1, demo:false,
     profile:{ name:'', sex:'f', age:30, height:165, activity:1.375, goal:'lose', target:null, startWeight:70 },
-    weights:[], meals:{}, water:{}, checks:{}, pulse:[], program:null };
+    weights:[], meals:{}, water:{}, checks:{}, mood:{}, sleep:{}, pulse:[], program:null };
 }
 function load(){ try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch(e){} return null; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
@@ -394,10 +413,11 @@ function demoState(){
     entryFromFood(food('Творог 5%'),'dinner',150), entryFromFood(food('Салат овощной с маслом'),'dinner',150) ].filter(Boolean);
   s.checks[t] = shake ? { a:shake.id } : {};
   s.water[t] = 1000; s.water[y] = 2000;
+  s.mood[t] = 4; s.sleep[t] = 7;
   const at = (ago,h,m) => { const d = addDays(now,-ago); d.setHours(h,m,0,0); return Math.min(d.getTime(), now.getTime()); };
-  s.pulse = [ { t:at(2,8,5), bpm:74, src:'manual' },
-              { t:at(1,8,20), bpm:71, src:'manual' },
-              { t:at(0,8,10), bpm:68, src:'manual' } ];
+  s.pulse = [ { t:at(2,8,5), bpm:74, sys:121, dia:79, src:'manual' },
+              { t:at(1,8,20), bpm:71, sys:118, dia:77, src:'manual' },
+              { t:at(0,8,10), bpm:68, sys:117, dia:76, src:'manual' } ];
   return s;
 }
 
@@ -501,10 +521,16 @@ function renderToday(){
       <button class="mini" data-act="tab" data-v="progress" data-to="health">
         <span class="eyebrow">Пульс</span>
         <span class="num">${lastP ? lastP.bpm + ' <small>уд/мин</small>' : '—'}</span>
-        <span class="small muted">${lastP ? fmtTime(lastP.t) : 'Записать замер'}</span>
+        <span class="small muted">${lastP ? (lastP.sys ? lastP.sys + '/' + lastP.dia + ' · ' : '') + fmtTime(lastP.t) : 'Записать замер'}</span>
       </button>
     </div>
 
+    <div class="card">
+      <h2>Самочувствие</h2>
+      <div class="moods" role="radiogroup" aria-label="Самочувствие">${MOODS.map((m,i) => `<button class="mood ${S.mood[t] === i+1 ? 'on' : ''}" role="radio" aria-checked="${S.mood[t] === i+1}" data-act="mood" data-n="${i+1}"><span class="num">${i+1}</span><small>${m}</small></button>`).join('')}</div>
+      <div class="row between"><span>Сон прошлой ночью</span>
+        <div class="stepper"><button data-act="sleep" data-d="-0.5" aria-label="Меньше сна">−</button><b class="num">${fmtN(S.sleep[t] || 0)} ч</b><button data-act="sleep" data-d="0.5" aria-label="Больше сна">+</button></div></div>
+    </div>
     <p class="fine">«Тонус» — автор: ${esc(AUTHOR)}. Не является официальным приложением NL International.</p>`;
 }
 
@@ -685,16 +711,19 @@ function renderProgress(){
 
     <div class="sec-title" id="health"><h2>Здоровье</h2></div>
     <form class="card" id="p-form">
-      <h2>Пульс</h2>
+      <h2>Пульс и давление</h2>
       <div class="fgrid">
         <label>Пульс, уд/мин<input id="p-bpm" type="number" inputmode="numeric" min="30" max="220" required></label>
+        <label>Давление<div class="row" style="gap:6px"><input id="p-sys" type="number" inputmode="numeric" min="60" max="260" placeholder="120" aria-label="Верхнее"><span>/</span><input id="p-dia" type="number" inputmode="numeric" min="30" max="160" placeholder="80" aria-label="Нижнее"></div></label>
       </div>
       <button class="btn" type="submit">Сохранить замер</button>
-      ${pulse.length ? `<ul class="hist">${pulse.map(x => `<li><div class="hd"><b class="tnum">${x.bpm} уд/мин</b> <span class="muted small">${fmtTime(x.t)}</span></div>
+      ${pulse.length ? `<ul class="hist">${pulse.map(x => `<li><div class="hd"><b class="tnum">${x.bpm} уд/мин</b>${x.sys ? ' <span class="tnum">· ' + x.sys + '/' + x.dia + '</span>' : ''} <span class="muted small">${fmtTime(x.t)}${x.src === 'bt' ? ' · с датчика' : ''}</span></div>
         <button class="x" type="button" data-act="del-pulse" data-t="${x.t}" aria-label="Удалить замер">×</button></li>`).join('')}</ul>` : ''}
     </form>
 
-    <p class="fine">Приложение не ставит диагнозов. При плохом самочувствии или необычном пульсе обратитесь к врачу.</p>`;
+    ${navigator.bluetooth ? `<div class="card" id="bt-box">${btHTML()}</div>` : ''}
+
+    <p class="fine">Приложение не ставит диагнозов. При плохом самочувствии, высоком давлении или пульсе обратитесь к врачу.</p>`;
 }
 
 function weightChart(all, target){
@@ -728,6 +757,51 @@ function weightChart(all, target){
     <text class="lbl" x="${L}" y="${H - 6}">${fmtShort(pts[0].d)}</text>
     <text class="lbl" x="${W - R}" y="${H - 6}" text-anchor="end">${fmtShort(pts[pts.length-1].d)}</text>
   </svg>${!showT && target ? `<p class="small muted">Цель: ${fmtN(target)} кг</p>` : ''}`;
+}
+
+/* --- Bluetooth-пульсометр (стандартный профиль Heart Rate) --- */
+const bt = { status:'idle', bpm:null, dev:null, msg:'' };
+const heartSVG = beat => `<svg class="heart ${beat ? 'beat' : ''}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.5-9.3C1.1 8.3 3.3 4.5 7 4.5c2 0 3.5 1.1 5 2.9 1.5-1.8 3-2.9 5-2.9 3.7 0 5.9 3.8 4.5 7.2C19.5 16.4 12 21 12 21z"/></svg>`;
+function btHTML(){
+  const head = `<div><h2>Пульсометр по Bluetooth</h2></div>`;
+  if (bt.status === 'live') return `${head}
+    <div class="bt-live">${heartSVG(true)}<div><b class="num bt-bpm">${bt.bpm ?? '…'}</b> <span class="muted">уд/мин</span><div class="small muted">${esc(bt.dev && bt.dev.name || 'Датчик')} подключён</div></div></div>
+    <div class="grid2"><button class="btn" data-act="bt-save" ${bt.bpm ? '' : 'disabled'}>Сохранить замер</button><button class="btn line" data-act="bt-off">Отключить</button></div>`;
+  if (bt.status === 'connecting') return `${head}<p class="small muted">Выберите устройство в списке и дождитесь подключения…</p>`;
+  const note = bt.status === 'unsupported'
+    ? `<p class="small bad">Этот браузер не поддерживает Bluetooth. На Android откройте приложение в Chrome.</p>`
+    : bt.status === 'error' ? `<p class="small bad">${esc(bt.msg)}</p>` : '';
+  return `${head}
+    <p class="small muted">Подходят нагрудные датчики пульса и часы с функцией «трансляция пульса» (она есть у многих Garmin, Amazfit, Xiaomi, Polar). Работает в Chrome на Android.</p>
+    ${note}
+    <button class="btn ghost" data-act="bt-connect">Подключить датчик</button>`;
+}
+function renderBT(){ const el = $('bt-box'); if (el) el.innerHTML = btHTML(); }
+async function btConnect(){
+  if (!navigator.bluetooth){ bt.status = 'unsupported'; renderBT(); return; }
+  try {
+    bt.status = 'connecting'; renderBT();
+    const dev = await navigator.bluetooth.requestDevice({ filters:[{ services:['heart_rate'] }] });
+    bt.dev = dev;
+    dev.addEventListener('gattserverdisconnected', () => { bt.status = 'idle'; bt.bpm = null; renderBT(); });
+    const server = await dev.gatt.connect();
+    const svc = await server.getPrimaryService('heart_rate');
+    const ch = await svc.getCharacteristic('heart_rate_measurement');
+    ch.addEventListener('characteristicvaluechanged', e => {
+      const v = e.target.value, flags = v.getUint8(0);
+      bt.bpm = (flags & 1) ? v.getUint16(1, true) : v.getUint8(1);
+      const el = document.querySelector('.bt-bpm'); if (el) el.textContent = bt.bpm; else renderBT();
+      const sb = document.querySelector('[data-act="bt-save"]'); if (sb) sb.disabled = false;
+    });
+    await ch.startNotifications();
+    bt.status = 'live'; renderBT();
+  } catch(err){
+    if (err && err.name === 'NotFoundError'){ bt.status = 'idle'; }
+    else { bt.status = 'error'; bt.msg = (err && err.name === 'SecurityError')
+      ? 'Браузер не дал доступ к Bluetooth. Установите приложение на телефон и откройте его в Chrome.'
+      : 'Не удалось подключиться. Проверьте, что на часах включена трансляция пульса, и попробуйте ещё раз.'; }
+    renderBT();
+  }
 }
 
 /* ================= ПРОДУКТЫ ================= */
@@ -877,6 +951,8 @@ document.addEventListener('click', e => {
     case 'add-food': openAddFood(d.meal, d.day); break;
     case 'water-add': S.water[t] = Math.max(0, (S.water[t] || 0) + Number(d.ml)); commit(); break;
     case 'water-set': { const n = +d.n, cur = Math.floor((S.water[t] || 0)/250); S.water[t] = (n === cur ? n - 1 : n)*250; commit(); break; }
+    case 'mood': S.mood[t] = S.mood[t] === +d.n ? undefined : +d.n; commit(); break;
+    case 'sleep': S.sleep[t] = Math.min(14, Math.max(0, (S.sleep[t] || 0) + Number(d.d))); commit(); break;
     case 'check': {
       const pr = progById(S.program.id), it = pr.plan.find(i => i.id === d.id), day = S.checks[t] || (S.checks[t] = {});
       if (day[it.id]){
@@ -928,6 +1004,9 @@ document.addEventListener('click', e => {
       const i = S.pulse.findIndex(x => String(x.t) === d.t); if (i < 0) break;
       const [gone] = S.pulse.splice(i, 1); commit();
       toast('Замер удалён', () => { S.pulse.splice(i, 0, gone); commit(); }); break; }
+    case 'bt-connect': btConnect(); break;
+    case 'bt-off': try { bt.dev && bt.dev.gatt.disconnect(); } catch(err){} bt.status = 'idle'; bt.bpm = null; renderBT(); break;
+    case 'bt-save': if (bt.bpm){ S.pulse.push({ t:Date.now(), bpm:bt.bpm, src:'bt' }); save(); renderProgress(); toast(`Сохранено: ${bt.bpm} уд/мин`); } break;
     case 'clear-demo': S = blank(); save(); show('profile'); toast('Примеры удалены. Заполните свой профиль'); break;
     case 'install': if (installEvt){ installEvt.prompt(); installEvt = null; renderProfile(); } break;
     case 'reset': resetAsk = true; renderProfile(); break;
@@ -946,7 +1025,8 @@ document.addEventListener('submit', e => {
     commit(); toast(`Вес ${fmtN(kg)} кг сохранён`);
   } else if (f.id === 'p-form'){
     const bpm = num('p-bpm'); if (!(bpm >= 30 && bpm <= 220)) return;
-    S.pulse.push({ t:Date.now(), bpm:Math.round(bpm), src:'manual' });
+    const sys = num('p-sys'), dia = num('p-dia');
+    S.pulse.push({ t:Date.now(), bpm:Math.round(bpm), sys: sys && dia ? Math.round(sys) : null, dia: sys && dia ? Math.round(dia) : null, src:'manual' });
     commit(); toast('Замер сохранён');
     requestAnimationFrame(() => { const el = $('health'); if (el) el.scrollIntoView({ block:'start' }); });
   } else if (f.id === 'g-form'){
