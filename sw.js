@@ -2,7 +2,7 @@
 // Файлы приложения сначала берём из сети, чтобы новая версия была видна сразу,
 // а если сети нет или она медленная — из сохранённой копии.
 // Номер в CACHE увеличивает deploy_github.sh: по нему телефоны узнают об обновлении.
-const CACHE = 'tonus-v15';
+const CACHE = 'tonus-v16';
 const ASSETS = ['./', './index.html', './products.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const WAIT_MS = 3000; // столько ждём сеть, потом открываем сохранённую копию
 
