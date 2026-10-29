@@ -109,17 +109,6 @@ label{display:grid;gap:4px;font-size:13px;color:var(--muted);font-weight:500;min
 .mb-track{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
 .mb-track i{display:block;height:100%;background:var(--accent);border-radius:4px}
 
-/* program checklist */
-.checks{display:grid;gap:6px}
-.check{appearance:none;border:0;background:var(--bg);border-radius:12px;padding:11px 12px;display:flex;align-items:flex-start;gap:12px;text-align:left;cursor:pointer;min-height:44px;width:100%}
-.check .box{flex:none;width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 2px var(--line);display:grid;place-items:center;margin-top:1px}
-.check.on .box{background:var(--accent);box-shadow:none}
-.check.on .box::after{content:"";width:10px;height:6px;border:2.5px solid var(--accent-ink);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
-.check.on .txt{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
-.check .when{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent)}
-.progbar{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
-.progbar i{display:block;height:100%;background:var(--accent)}
-
 /* water */
 .glasses{display:flex;flex-wrap:wrap;gap:7px}
 .glass{appearance:none;border:0;width:28px;height:38px;border-radius:5px 5px 10px 10px;background:var(--water-soft);cursor:pointer;position:relative;padding:0}
@@ -180,7 +169,6 @@ details p{margin-top:6px}
 .kbju div{background:var(--bg);border-radius:12px;padding:10px 8px;display:grid;gap:2px;text-align:center}
 .kbju .num{font-size:17px}
 .kbju span{font-size:11.5px;color:var(--muted)}
-.prog{display:grid;gap:10px}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);width:fit-content}
 
 /* chart */
@@ -308,26 +296,6 @@ const PRODUCTS = window.NL_PRODUCTS || [];
 const NL_META = window.NL_META || {};
 const CATS = ['Здоровое питание','Похудение','БАД и адаптогены','Коллаген','Для детей','Антиэйдж'];
 
-/* Программы — примеры схем на продуктах NL. when: Утро / Обед / Ужин / Перекус / Днём */
-const PROGRAMS = [
-  { id:'start7', name:'Старт за 7 дней', days:7,
-    about:'Мягкий вход: коктейль вместо завтрака, суп ED Smart на ужин, обычный обед и вода по норме.',
-    plan:[
-      { id:'a', when:'Утро', text:'ED Smart классический вместо завтрака', product:74448 },
-      { id:'b', when:'Утро', text:'Омега-3: 1 капсула во время еды', product:73797 },
-      { id:'c', when:'Днём', text:'Фиточай «Водолей», 1 чашка', product:74300 },
-      { id:'d', when:'Ужин', text:'ED Smart суп «Курица» вместо ужина', product:74621 }
-    ] },
-  { id:'bal30', name:'В форме за 30 дней', days:30,
-    about:'Коктейль вместо завтрака, суп на ужин, омега-3 и коллаген каждый день.',
-    plan:[
-      { id:'a', when:'Утро', text:'ED Smart молочный «Кофе с молоком» вместо завтрака', product:74039 },
-      { id:'b', when:'Утро', text:'Омега-3: 1 капсула во время еды', product:73797 },
-      { id:'c', when:'Обед', text:'«Пептидный коллаген»: 1 стик во время еды', product:74537 },
-      { id:'d', when:'Ужин', text:'ED Smart суп «Грибы» вместо ужина', product:74622 }
-    ] }
-];
-
 /* Обычная еда: на 100 г — ккал, белки, жиры, углеводы, порция по умолчанию (г) */
 const FOODS = [
   ['Гречка варёная',110,4.2,1.1,21.3,150], ['Рис варёный',116,2.2,0.5,24.9,150],
@@ -344,7 +312,6 @@ const FOODS = [
 ].map(([name,kcal,p,f,c,g]) => ({ name, kcal, p, f, c, g }));
 
 const MEALS = [['breakfast','Завтрак'],['lunch','Обед'],['dinner','Ужин'],['snack','Перекус']];
-const WHEN_TO_MEAL = { 'Утро':'breakfast', 'Обед':'lunch', 'Ужин':'dinner', 'Перекус':'snack' };
 const MOODS = ['Плохо','Так себе','Средне','Хорошо','Отлично'];
 const ACTIVITY = [[1.2,'Мало движения'],[1.375,'Лёгкая активность'],[1.55,'Спорт 3–5 раз в неделю'],[1.725,'Высокая активность']];
 const GOALS = [['lose','Снизить вес'],['keep','Держать вес'],['gain','Набрать вес']];
@@ -365,7 +332,6 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&l
 const uid = () => Math.random().toString(36).slice(2,10);
 const $ = id => document.getElementById(id);
 const prod = id => PRODUCTS.find(p => String(p.id) === String(id));
-const progById = id => PROGRAMS.find(p => p.id === id);
 const mealName = m => (MEALS.find(x => x[0] === m) || MEALS[0])[1];
 const relDay = k => { const n = daysBetween(k, todayKey()); return n === 0 ? 'Сегодня' : n === 1 ? 'Вчера' : fmtDay(k); };
 function mealByTime(){ const h = new Date().getHours(); return h < 11 ? 'breakfast' : h < 15 ? 'lunch' : h < 18 ? 'snack' : 'dinner'; }
@@ -375,7 +341,7 @@ const KEY = 'moy-balans.v2';
 function blank(){
   return { v:1, demo:false,
     profile:{ name:'', sex:'f', age:30, height:165, activity:1.375, goal:'lose', target:null, startWeight:70 },
-    weights:[], meals:{}, water:{}, checks:{}, mood:{}, sleep:{}, pulse:[], program:null };
+    weights:[], meals:{}, water:{}, mood:{}, sleep:{}, pulse:[] };
 }
 function load(){ try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch(e){} return null; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
@@ -386,8 +352,7 @@ function entryFromProduct(pid, meal, portions){
   return { id:uid(), meal, pid:p.id, name:p.name, amount: k === 1 ? '1 порция' : fmtN(k) + ' порц.',
     kcal:Math.round((p.kcal || 0)*k), p:v(p.p), f:v(p.f), c:v(p.c), nokcal: p.kcal == null };
 }
-/* при отметке в программе в дневник попадает то, что даёт заметные калории */
-const countsKcal = p => !!p && p.kind !== 'other' && (p.kcal || 0) >= 10;
+
 function entryFromFood(food, meal, g){
   const k = g/100;
   return { id:uid(), meal, name:food.name, amount:fmtN(g,0) + ' г',
@@ -402,14 +367,12 @@ function demoState(){
   const pts = [[24,76.8,86],[22,76.5],[20,76.6],[18,76.0,85],[16,75.7],[14,75.8],[12,75.2,84],[10,75.0],[8,74.9],[6,74.5,83],[4,74.4],[2,74.0],[0,73.8,82.5]];
   s.weights = pts.map(([ago,kg,waist]) => ({ d:dkey(addDays(now,-ago)), kg, waist:waist || null, hips:null }));
   const t = todayKey(), y = dkey(addDays(now,-1));
-  s.program = { id:'start7', start:dkey(addDays(now,-2)) };
   const shake = entryFromProduct(74448,'breakfast',1);
   s.meals[t] = [ shake, entryFromFood(food('Гречка варёная'),'lunch',150),
     entryFromFood(food('Куриная грудка отварная'),'lunch',120), entryFromFood(food('Огурец'),'lunch',100) ].filter(Boolean);
   s.meals[y] = [ entryFromProduct(74039,'breakfast',1), entryFromFood(food('Лосось запечённый'),'lunch',120),
     entryFromFood(food('Рис варёный'),'lunch',150), entryFromProduct(74694,'snack',1),
     entryFromFood(food('Творог 5%'),'dinner',150), entryFromFood(food('Салат овощной с маслом'),'dinner',150) ].filter(Boolean);
-  s.checks[t] = shake ? { a:shake.id } : {};
   s.water[t] = 1000; s.water[y] = 2000;
   s.mood[t] = 4; s.sleep[t] = 7;
   const at = (ago,h,m) => { const d = addDays(now,-ago); d.setHours(h,m,0,0); return Math.min(d.getTime(), now.getTime()); };
@@ -502,7 +465,6 @@ function renderToday(){
       <button class="btn wide" data-act="add-food" data-meal="${mealByTime()}">Добавить еду</button>
     </div>
 
-    ${programCard(t)}
 
     <div class="card">
       <div class="row between"><h2>Вода</h2><span class="small"><span class="water-v tnum">${fmtN(water/1000,2)} л</span> <span class="muted">из ${fmtN(g.water/1000,1)} л</span></span></div>
@@ -529,23 +491,6 @@ function renderToday(){
       <div class="row between"><span>Сон прошлой ночью</span>
         <div class="stepper"><button data-act="sleep" data-d="-0.5" aria-label="Меньше сна">−</button><b class="num">${fmtN(S.sleep[t] || 0)} ч</b><button data-act="sleep" data-d="0.5" aria-label="Больше сна">+</button></div></div>
     </div>`;
-}
-
-function programCard(t){
-  if (!S.program) return `<div class="card"><div><div class="eyebrow">Программа</div><h2>Программа не выбрана</h2></div>
-    <p class="muted small">Выберите схему приёма продуктов, и здесь появится список на каждый день.</p>
-    <button class="btn ghost" data-act="tab" data-v="products">Выбрать программу</button></div>`;
-  const pr = progById(S.program.id), day = daysBetween(S.program.start, t) + 1;
-  if (day > pr.days) return `<div class="card"><div><div class="eyebrow">Программа</div><h2>«${esc(pr.name)}» завершена</h2></div>
-    <p class="muted small">Все ${pr.days} дней пройдены. Посмотрите прогресс и обсудите следующий шаг с консультантом.</p>
-    <div class="row wrap"><button class="btn" data-act="start-program" data-id="${pr.id}">Пройти ещё раз</button><button class="btn line" data-act="tab" data-v="progress">Мой прогресс</button></div></div>`;
-  const ch = S.checks[t] || {}, done = pr.plan.filter(i => ch[i.id]).length;
-  return `<div class="card">
-    <div class="row between"><div><div class="eyebrow">Программа · день ${day} из ${pr.days}</div><h2>${esc(pr.name)}</h2></div><span class="pill tnum">${done}/${pr.plan.length}</span></div>
-    <div class="progbar"><i style="width:${(day/pr.days*100).toFixed(1)}%"></i></div>
-    <div class="checks">${pr.plan.map(i => `<button class="check ${ch[i.id] ? 'on' : ''}" role="checkbox" aria-checked="${!!ch[i.id]}" data-act="check" data-id="${i.id}">
-      <span class="box"></span><span class="txt"><span class="when">${esc(i.when)}</span>${esc(i.text)}</span></button>`).join('')}</div>
-  </div>`;
 }
 
 /* ================= ПИТАНИЕ ================= */
@@ -815,29 +760,16 @@ function catalogRows(list){
       <span class="pk tnum">${p.kcal != null ? fmtN(p.kcal,0) + ' ккал' : ''}</span></button>`).join('');
 }
 function renderProducts(){
-  const t = todayKey(), list = catalogList();
+  const list = catalogList();
   $('v-products').innerHTML = `
-    <header class="vh"><div><div class="eyebrow">Каталог NL</div><h1>Продукты и программы</h1></div></header>
-    <div class="sec-title"><h2>Программы</h2><span class="muted small">примеры схем</span></div>
-    ${PROGRAMS.map(p => {
-      const active = S.program && S.program.id === p.id, day = active ? daysBetween(S.program.start, t) + 1 : 0;
-      return `<div class="card prog">
-        <div class="row between"><h2>${esc(p.name)}</h2><span class="pill">${p.days} дн.</span></div>
-        <p class="small muted">${esc(p.about)}</p>
-        <ul class="small" style="margin:0;padding-left:18px;display:grid;gap:2px">${p.plan.map(i => `<li><b>${esc(i.when)}:</b> ${esc(i.text)}</li>`).join('')}</ul>
-        ${active && day <= p.days
-          ? `<div class="row between wrap"><span class="pill">Идёт · день ${day} из ${p.days}</span><button class="btn line sm" data-act="stop-program">Остановить</button></div>`
-          : `<button class="btn ${active ? 'line' : ''}" data-act="start-program" data-id="${p.id}">${active ? 'Начать заново' : 'Начать программу'}</button>`}
-      </div>`;
-    }).join('')}
-    <p class="fine">Схемы показаны для примера. Подходящую программу подберёт ваш консультант NL.</p>
+    <header class="vh"><div><div class="eyebrow">Каталог NL</div><h1>Продукты NL</h1></div></header>
     <div class="sec-title"><h2>Продукты</h2><span class="muted small tnum" id="cat-count">${list.length} из ${PRODUCTS.length}</span></div>
     <div class="prodpage" style="display:grid;gap:10px">
       <input id="cat-q" type="search" placeholder="Поиск по ${PRODUCTS.length} продуктам" value="${esc(catQ)}" aria-label="Поиск продукта">
       ${catChips('cat-cat', catC)}
     </div>
     <div class="plist" id="cat-list">${catalogRows(list)}</div>
-    <p class="fine">Данные с сайта NL International${NL_META.collected ? ' на ' + new Date(NL_META.collected).toLocaleDateString('ru-RU') : ''}. Продукция не является лекарственным средством. Перед началом программы посоветуйтесь с врачом, если у вас есть хронические заболевания, беременность или кормление грудью.</p>`;
+    <p class="fine">Данные с сайта NL International${NL_META.collected ? ' на ' + new Date(NL_META.collected).toLocaleDateString('ru-RU') : ''}. Продукция не является лекарственным средством. Перед применением посоветуйтесь с врачом, если у вас есть хронические заболевания, беременность или кормление грудью.</p>`;
 }
 
 /* ================= ПРОФИЛЬ ================= */
@@ -948,30 +880,14 @@ document.addEventListener('click', e => {
     case 'water-set': { const n = +d.n, cur = Math.floor((S.water[t] || 0)/250); S.water[t] = (n === cur ? n - 1 : n)*250; commit(); break; }
     case 'mood': S.mood[t] = S.mood[t] === +d.n ? undefined : +d.n; commit(); break;
     case 'sleep': S.sleep[t] = Math.min(14, Math.max(0, (S.sleep[t] || 0) + Number(d.d))); commit(); break;
-    case 'check': {
-      const pr = progById(S.program.id), it = pr.plan.find(i => i.id === d.id), day = S.checks[t] || (S.checks[t] = {});
-      if (day[it.id]){
-        if (typeof day[it.id] === 'string') S.meals[t] = (S.meals[t] || []).filter(x => x.id !== day[it.id]);
-        delete day[it.id]; commit();
-      } else {
-        const p = prod(it.product);
-        if (countsKcal(p)){
-          const en = entryFromProduct(p.id, WHEN_TO_MEAL[it.when] || mealByTime(), 1);
-          (S.meals[t] || (S.meals[t] = [])).push(en); day[it.id] = en.id; commit();
-          toast(`Отмечено и добавлено в дневник: ${en.kcal} ккал`);
-        } else { day[it.id] = true; commit(); }
-      }
-      break; }
     case 'day': { const n = addDays(parseKey(foodDay), +d.d); if (dkey(n) <= t){ foodDay = dkey(n); renderFood(); } break; }
     case 'del-entry': {
       for (const k of Object.keys(S.meals)){
         const i = S.meals[k].findIndex(x => x.id === d.id);
         if (i < 0) continue;
         const [gone] = S.meals[k].splice(i, 1);
-        const ch = S.checks[k] || {}, link = Object.keys(ch).find(key => ch[key] === gone.id);
-        if (link) delete ch[link];
         commit();
-        toast(`Удалено: ${gone.name}`, () => { S.meals[k].splice(i, 0, gone); if (link) (S.checks[k] || (S.checks[k] = {}))[link] = gone.id; commit(); });
+        toast(`Удалено: ${gone.name}`, () => { S.meals[k].splice(i, 0, gone); commit(); });
         break;
       }
       break; }
@@ -986,10 +902,6 @@ document.addEventListener('click', e => {
     case 'open-product': openProduct(d.id); break;
     case 'nl-cat': sh.pc = d.c; renderSheet(); break;
     case 'cat-cat': catC = d.c; renderProducts(); break;
-    case 'start-program':
-      S.program = { id:d.id, start:t }; S.checks[t] = {}; save(); closeSheet();
-      show('today'); toast(`Программа «${progById(d.id).name}» начата`); break;
-    case 'stop-program': S.program = null; commit(); toast('Программа остановлена'); break;
     case 'range': range = d.r; renderProgress(); break;
     case 'del-weight': {
       const i = S.weights.findIndex(w => w.d === d.d); if (i < 0) break;

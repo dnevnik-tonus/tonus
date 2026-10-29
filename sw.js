@@ -1,6 +1,6 @@
 // Офлайн-режим и экономия трафика: приложение открывается из памяти телефона.
 // Чтобы телефоны получили новую версию, увеличьте номер в CACHE.
-const CACHE = 'tonus-v2';
+const CACHE = 'tonus-v3';
 const ASSETS = ['./', './index.html', './products.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
