@@ -371,6 +371,24 @@ const PROGRAMS = [
       { id:'c', when:'Днём', text:'Фиточай «Водолей», 1 чашка', product:74300 },
       { id:'d', when:'Ужин', text:'ED Smart суп «Курица» вместо ужина', product:74621 }
     ] },
+  /* 14 и 21 день: только продукты, чей курс по этикетке укладывается в срок программы
+     («ДрейнЭффект» гранат — 10–30 дней, коллаген — 10–20 дней) */
+  { id:'light14', name:'Лёгкость за 14 дней', days:14,
+    about:'«ДрейнЭффект» утром до завтрака, коктейль вместо завтрака, коллаген курсом 14 дней и суп ED Smart на ужин.',
+    plan:[
+      { id:'a', when:'Утро', text:'«ДрейнЭффект»: 1 стик в 200 мл воды за 30 минут до завтрака', product:74645 },
+      { id:'b', when:'Утро', text:'ED Smart классический вместо завтрака', product:74448 },
+      { id:'c', when:'Обед', text:'«Пептидный коллаген»: 1 стик в 100 мл воды во время еды', product:74537 },
+      { id:'d', when:'Ужин', text:'ED Smart суп «Курица» вместо ужина', product:74621 }
+    ] },
+  { id:'rhythm21', name:'Ритм за 21 день', days:21,
+    about:'Коктейль вместо завтрака, «ДрейнЭффект» до обеда и коллаген курсом 20 дней, фиточай днём. Обед и ужин — обычная еда.',
+    plan:[
+      { id:'a', when:'Утро', text:'ED Smart молочный «Кофе с молоком» вместо завтрака', product:74039 },
+      { id:'b', when:'Обед', text:'«ДрейнЭффект»: 1 стик в 200 мл воды за 30 минут до обеда (дни 1–20)', product:74645, to:20 },
+      { id:'c', when:'Обед', text:'«Пептидный коллаген»: 1 стик в 100 мл воды во время еды (дни 1–20)', product:74537, to:20 },
+      { id:'d', when:'Днём', text:'Фиточай «Водолей»: 1 фильтр-пакет на стакан кипятка', product:74300 }
+    ] },
   { id:'bal30', name:'В форме за 30 дней', days:30,
     about:'Коктейль вместо завтрака, суп на ужин, омега-3 каждый день и коллаген курсом 20 дней.',
     plan:[
@@ -484,6 +502,8 @@ const CONCERNS = [['ok','Всё хорошо'],['sleep','Плохо сплю'],[
 /* Тренировки: MET — сколько раз больше энергии, чем в покое (ккал ≈ MET × вес × часы) */
 const WORKOUTS = [['Ходьба',3.5],['Бег',8],['Кардио',6.5],['Силовая',5],['Йога и растяжка',2.5],['Плавание',6],['Велосипед',6.8],['Танцы',5]];
 const STEPS_GOAL = 10000;
+/* Мои добавки: когда принимать и с какого часа напоминать */
+const SUPP_WHEN = [['Утро',6],['Перед завтраком',6],['Обед',12],['Ужин',18],['Перед сном',21]];
 
 /* Совет дня: общие советы по образу жизни, без обещаний эффекта от продуктов. tag — для кого в первую очередь */
 const TIPS = [
@@ -555,7 +575,7 @@ const KEY = 'moy-balans.v2';
 function blank(){
   return { v:1, demo:false,
     profile:{ name:'', sex:'f', age:30, height:165, activity:1.375, goal:'lose', target:null, startWeight:70 },
-    weights:[], meals:{}, water:{}, checks:{}, mood:{}, sleep:{}, pulse:[], program:null, steps:{}, workouts:{} };
+    weights:[], meals:{}, water:{}, checks:{}, mood:{}, sleep:{}, pulse:[], program:null, steps:{}, workouts:{}, supps:[], suppChecks:{} };
 }
 function load(){ try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch(e){} return null; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
@@ -604,6 +624,7 @@ function demoState(){
 /* В клиентской версии (сайт) приложение стартует пустым, в демо — с примерами */
 let S = load() || (window.APP_MODE === 'release' ? blank() : demoState());
 S.steps = S.steps || {}; S.workouts = S.workouts || {};   // поля из новых версий
+S.supps = S.supps || []; S.suppChecks = S.suppChecks || {};
 
 /* ---------- расчёты ---------- */
 function sortedWeights(){ return S.weights.slice().sort((a,b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0); }
@@ -738,6 +759,7 @@ function renderToday(){
     </div>
 
     ${programCard(t)}
+    ${suppCard(t)}
 
     <div class="card">
       <div class="row between"><h2>Вода</h2><span class="small"><span class="water-v tnum">${fmtN(water/1000,2)} л</span> <span class="muted">из ${fmtN(g.water/1000,1)} л</span></span></div>
@@ -787,6 +809,8 @@ function notesCard(t){
       if (due.length) notes.push('Ещё не отмечено: ' + due.map(i => i.text).join('; ') + '.');
     }
   }
+  const sd = suppsDue(t, h);
+  if (sd.length) notes.push('Мои добавки — пора принять: ' + sd.map(s => s.name + (s.note ? ` (${s.note})` : '')).join('; ') + '.');
   if (h >= 11 && !meals.some(e => e.meal === 'breakfast')) notes.push(`Ты ещё не ${sx('записал','записала')} завтрак. Если уже ${sx('поел','поела')} — добавь, пока помнишь.`);
   const streak = diaryStreak();
   if (streak >= 2) notes.push(meals.length ? `Ты ведёшь дневник ${streak}-й день подряд — ${sx('молодец','умница')}!` : `Вчера был ${streak}-й день дневника подряд. Продолжим сегодня?`);
@@ -836,6 +860,39 @@ function renderWorkoutSheet(){
         <span class="muted tnum" id="wo-kcal" style="flex:1;text-align:right">≈ ${workoutKcal(sh.type, sh.min)} ккал</span></div>
       <button class="btn" type="submit">Добавить</button></form>
     <p class="fine">Калории — примерный расчёт по виду нагрузки и весу. Норма на день уже учитывает активность из профиля, поэтому тренировки к ней не прибавляются.</p>`;
+}
+
+/* --- мои добавки: свой список БАДов и витаминов с отметками и напоминаниями --- */
+const suppHour = w => (SUPP_WHEN.find(x => x[0] === w) || [0, 6])[1];
+const suppsSorted = () => S.supps.slice().sort((a,b) => suppHour(a.when) - suppHour(b.when));
+function suppsDue(t, h){ const ch = S.suppChecks[t] || {}; return suppsSorted().filter(s => !ch[s.id] && h >= suppHour(s.when)); }
+function suppCard(t){
+  if (!S.supps.length) return '';
+  const ch = S.suppChecks[t] || {}, list = suppsSorted(), done = list.filter(s => ch[s.id]).length;
+  return `<div class="card">
+    <div class="row between"><div><div class="eyebrow">Свой список</div><h2>Мои добавки</h2></div><span class="pill tnum">${done}/${list.length}</span></div>
+    <div class="checks">${list.map(s => `<button class="check ${ch[s.id] ? 'on' : ''}" role="checkbox" aria-checked="${!!ch[s.id]}" data-act="supp-check" data-id="${s.id}">
+      <span class="box"></span><span class="txt"><span class="when">${esc(s.when)}</span>${esc(s.name)}${s.note ? ' — ' + esc(s.note) : ''}</span></button>`).join('')}</div>
+    <button class="btn line sm" style="justify-self:start" data-act="tab" data-v="profile" data-to="supps">Изменить список</button>
+  </div>`;
+}
+function openSupp(pid){
+  const p = pid ? prod(pid) : null;
+  sh = { kind:'supp', name: p ? p.name : '', when:'Утро' }; renderSheet(); openSheet();
+}
+function renderSuppSheet(){
+  const names = PRODUCTS.filter(p => p.kind === 'supplement').map(p => p.name);
+  $('sheet-body').innerHTML = `
+    <div class="sheet-head"><div><div class="eyebrow">Мои добавки</div><h2 id="sheet-title">Добавить в список</h2></div>
+      <button class="x" data-act="sheet-close" aria-label="Закрыть">×</button></div>
+    <form id="supp-form" style="display:grid;gap:10px">
+      <label>Название<input id="supp-name" required maxlength="80" list="supp-names" autocomplete="off" value="${esc(sh.name)}" placeholder="Например, «Метабуст» или витамин D"></label>
+      <datalist id="supp-names">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+      <div><div class="eyebrow" style="margin-bottom:6px">Когда принимать</div>
+        <div class="chips">${SUPP_WHEN.map(([w]) => `<button type="button" class="chip ${w === sh.when ? 'on' : ''}" data-act="supp-when" data-w="${esc(w)}">${esc(w)}</button>`).join('')}</div></div>
+      <label>Сколько<input id="supp-note" maxlength="40" autocomplete="off" placeholder="1 капсула, 1 стик…"></label>
+      <button class="btn" type="submit">Добавить</button></form>
+    <p class="fine">Дозировку и время приёма берите с упаковки или со страницы продукта. Если принимаете лекарства — посоветуйтесь с врачом. В выбранное время на экране «Сегодня» появится напоминание.</p>`;
 }
 
 function programCard(t){
@@ -959,6 +1016,7 @@ function renderSheet(){
   if (sh.kind === 'product') return renderProductSheet();
   if (sh.kind === 'menu') return renderMenuSheet();
   if (sh.kind === 'wo') return renderWorkoutSheet();
+  if (sh.kind === 'supp') return renderSuppSheet();
   const tabs = [['nl','Продукты NL'],['food','Обычная еда'],['own','Своё блюдо']];
   $('sheet-body').innerHTML = `
     <div class="sheet-head"><div><div class="eyebrow">${relDay(sh.day)}</div><h2 id="sheet-title">Добавить: ${mealName(sh.meal).toLowerCase()}</h2></div>
@@ -1041,6 +1099,7 @@ function renderProductSheet(){
       <a class="btn line sm" href="${esc(p.url)}" target="_blank" rel="noopener">Открыть страницу продукта ↗</a>
     </div>
     ${eat ? `<button class="btn wide" data-act="add-product" data-id="${p.id}">Добавить в дневник</button>` : ''}
+    ${p.kind === 'supplement' ? `<button class="btn line wide" data-act="supp-open" data-id="${p.id}">В мои добавки — с напоминанием</button>` : ''}
     <p class="fine">Название и КБЖУ — по данным NL International${when}. ${p.bad ? 'БАД, не является лекарственным средством. ' : ''}Перед применением прочитайте информацию на упаковке.</p>`;
 }
 
@@ -1295,6 +1354,15 @@ function renderProfile(){
       <div class="grid2"><button class="btn ghost" data-act="bot-open" data-mode="survey">Пройти анкету</button><button class="btn line" data-act="bot-open" data-mode="faq">Частые вопросы</button></div>
     </div>
 
+    <div class="card" id="supps">
+      <h2>Мои добавки</h2>
+      <p class="small muted">Свой список БАДов и витаминов: они появятся на экране «Сегодня» с галочками, а в выбранное время — напоминание.</p>
+      ${S.supps.length ? `<ul class="entries">${suppsSorted().map(s => { const pp = s.pid && prod(s.pid);
+        return `<li class="entry"><div class="e-main"><div class="e-name">${esc(s.name)}</div><div class="muted small">${esc(s.when)}${s.note ? ' · ' + esc(s.note) : ''}${pp ? ` · <a href="${esc(pp.url)}" target="_blank" rel="noopener" style="color:var(--accent)">на сайте NL ↗</a>` : ''}</div></div>
+        <button class="x" data-act="supp-del" data-id="${s.id}" aria-label="Удалить ${esc(s.name)}">×</button></li>`; }).join('')}</ul>` : ''}
+      <button class="btn ghost" data-act="supp-open">+ Добавить добавку</button>
+    </div>
+
     <div class="card">
       <h2>Настройки</h2>
       <div class="setrow"><span>Подсказки «На сегодня» и совет дня</span>
@@ -1429,11 +1497,16 @@ const FAQ = [
   { t:'Программы', items:[
     { q:'Какие есть программы?', a:[
       '«Старт за 7 дней» — мягкий вход: коктейль на завтрак, суп ED Smart на ужин, омега-3 и фиточай.',
+      '«Лёгкость за 14 дней» — «ДрейнЭффект» утром, коктейль на завтрак, коллаген и суп ED Smart на ужин.',
+      '«Ритм за 21 день» — коктейль на завтрак, «ДрейнЭффект» до обеда, коллаген 20 дней и фиточай; обед и ужин — обычная еда.',
       '«В форме за 30 дней» — коктейль на завтрак и суп на ужин, омега-3 каждый день и коллаген курсом 20 дней.',
       'Это примеры схем по инструкциям NL. Подходящую программу подберёт твой консультант.' ] },
     { q:'Как начать программу?', a:[
       '«Продукты» → выбери программу → «Начать программу». Или пройди анкету — в конце я предложу программу.',
       'Список на каждый день появится на экране «Сегодня».' ] },
+    { q:'Как добавить свои БАДы и витамины?', a:[
+      '«Профиль» → «Мои добавки» → «+ Добавить добавку»: впиши название (продукты NL подсказываются), время приёма и сколько. Или нажми «В мои добавки» в карточке БАДа в «Продуктах».',
+      'Добавки появятся на экране «Сегодня» с галочками, а в выбранное время — напоминание в карточке «На сегодня». Дозировку бери с упаковки.' ] },
     { q:'Что купить для программы?', a:[
       '«Продукты» → в карточке программы нажми «Что понадобится»: там продукты со ссылками на сайт NL и сколько упаковок нужно на всю программу.',
       'Подобрать продукты именно под тебя поможет твой консультант NL.' ] },
@@ -1741,6 +1814,13 @@ document.addEventListener('click', e => {
     case 'notes-hide': S.notesHidden = t; commit(); toast('Скрыто до завтра. Выключить совсем можно в «Профиле»'); break;
     case 'toggle-hints': S.profile.hints = S.profile.hints === false; commit(); break;
     case 'toggle-xe': S.profile.xe = !S.profile.xe; commit(); break;
+    case 'supp-open': closeSheet(); openSupp(d.id); break;
+    case 'supp-when': sh.when = d.w; document.querySelectorAll('[data-act="supp-when"]').forEach(c => c.classList.toggle('on', c.dataset.w === d.w)); break;
+    case 'supp-check': { const day = S.suppChecks[t] || (S.suppChecks[t] = {}); if (day[d.id]) delete day[d.id]; else day[d.id] = true; commit(); break; }
+    case 'supp-del': {
+      const i = S.supps.findIndex(s => s.id === d.id); if (i < 0) break;
+      const [gone] = S.supps.splice(i, 1); commit();
+      toast(`Удалено: ${gone.name}`, () => { S.supps.splice(i, 0, gone); commit(); }); break; }
     case 'menu-open': closeSheet(); openMenu(); break;
     case 'menu-tab': sh.tab = d.t; renderSheet(); break;
     case 'menu-day': sh.md = +d.i; renderSheet(); break;
@@ -1809,6 +1889,11 @@ document.addEventListener('submit', e => {
       if (ok !== true){ hint.textContent = ok; return; }
       answer(sp.step && sp.step < 1 ? r1(v) : Math.round(v), fmtN(v) + (sp.unit ? ' ' + sp.unit : ''));
     }
+  } else if (f.id === 'supp-form'){
+    const name = $('supp-name').value.trim(); if (!name) return;
+    const p = PRODUCTS.find(x => x.name === name);
+    S.supps.push({ id:uid(), name, pid: p ? p.id : null, when:sh.when, note:$('supp-note').value.trim() });
+    closeSheet(); commit(); toast(`Добавлено в мои добавки: ${name}`);
   } else if (f.id === 'steps-form'){
     const n = num('steps-in'); if (!(n >= 0 && n <= 100000)) return;
     S.steps[t] = Math.round(n); commit(); toast(`Записано: ${fmtN(n,0)} ${plural(Math.round(n), 'шаг', 'шага', 'шагов')}`);
