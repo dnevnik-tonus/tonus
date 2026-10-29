@@ -359,6 +359,9 @@ const AUTHOR = 'Дмитрий и Екатерина Мёдовы, бизнес-
 const PRODUCTS = window.NL_PRODUCTS || [];
 const NL_META = window.NL_META || {};
 const CATS = ['Здоровое питание','Похудение','БАД и адаптогены','Коллаген','Для детей','Антиэйдж'];
+/* Рубрики «по целям» — как на сайте NL (поле goals из products.js). Показываем их как есть, без своих обещаний */
+const GOAL_RUBRICS = ['Антистресс, сон','Для неё','Для него','Работа мозга'];
+const TIP_RUBRIC = { sleep:'Антистресс, сон', stress:'Антистресс, сон', '45':'Для неё' };
 
 /* Программы — примеры схем на продуктах NL; дозировки и сроки строго по инструкциям NL.
    when: Утро / Обед / Ужин / Перекус / Днём; to — последний день курса, если он короче программы */
@@ -575,7 +578,7 @@ const KEY = 'moy-balans.v2';
 function blank(){
   return { v:1, demo:false,
     profile:{ name:'', sex:'f', age:30, height:165, activity:1.375, goal:'lose', target:null, startWeight:70 },
-    weights:[], meals:{}, water:{}, checks:{}, mood:{}, sleep:{}, pulse:[], program:null, steps:{}, workouts:{}, supps:[], suppChecks:{} };
+    weights:[], meals:{}, water:{}, checks:{}, mood:{}, sleep:{}, pulse:[], program:null, steps:{}, workouts:{}, supps:[], suppChecks:{}, periods:[] };
 }
 function load(){ try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch(e){} return null; }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
@@ -624,7 +627,7 @@ function demoState(){
 /* В клиентской версии (сайт) приложение стартует пустым, в демо — с примерами */
 let S = load() || (window.APP_MODE === 'release' ? blank() : demoState());
 S.steps = S.steps || {}; S.workouts = S.workouts || {};   // поля из новых версий
-S.supps = S.supps || []; S.suppChecks = S.suppChecks || {};
+S.supps = S.supps || []; S.suppChecks = S.suppChecks || {}; S.periods = S.periods || [];
 
 /* ---------- расчёты ---------- */
 function sortedWeights(){ return S.weights.slice().sort((a,b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0); }
@@ -689,6 +692,25 @@ function change(field){
   return { from:a[field], to:b[field], diff:r1(b[field] - a[field]), dur:daysBetween(a.d, b.d), since:a.d };
 }
 const signed = v => (v > 0 ? '+' : '') + fmtN(v);
+
+/* Цикл: храним только даты начала месячных. Средняя длина — по последним 3 циклам длиной 21–45 дней, иначе 28.
+   Овуляцию не считаем: это не метод контрацепции и не медицинский прогноз */
+const cycleOn = () => S.profile.sex === 'f' && S.profile.cycle !== false;
+function cycleInfo(t){
+  const ps = S.periods.filter(d => d <= t).sort();
+  if (!ps.length) return null;
+  const last = ps[ps.length-1], lens = [];
+  for (let i = 1; i < ps.length; i++){ const n = daysBetween(ps[i-1], ps[i]); if (n >= 21 && n <= 45) lens.push(n); }
+  const recent = lens.slice(-3), avg = recent.length ? Math.round(recent.reduce((a,b) => a + b, 0)/recent.length) : 28;
+  return { last, day: daysBetween(last, t) + 1, avg, next: dkey(addDays(parseKey(last), avg)), measured: recent.length > 0 };
+}
+/* перед месячными и в первые дни вес часто прибавляет из-за воды */
+function cycleWaterDays(t){
+  if (!cycleOn()) return null;
+  const ci = cycleInfo(t); if (!ci) return null;
+  const toNext = daysBetween(t, ci.next);
+  return ci.day <= 4 || (toNext >= 0 && toNext <= 5) ? ci : null;
+}
 
 /* сколько дней подряд заполнен дневник питания (сегодня считается, если уже есть записи) */
 function diaryStreak(){
@@ -823,15 +845,21 @@ function notesCard(t){
     <div class="row between"><h2>На сегодня</h2><button class="x" data-act="notes-hide" aria-label="Скрыть до завтра">×</button></div>
     ${notes.length ? `<ul class="notes">${notes.map(n => `<li><span>${esc(n)}</span></li>`).join('')}</ul>` : ''}
     ${weighDue ? `<button class="btn line sm" style="justify-self:start" data-act="tab" data-v="progress" data-to="w-form">Записать вес</button>` : ''}
-    <div class="tip"><b>Совет дня</b><p class="small">${esc(tipOfDay(t))}</p></div>
+    ${tipHTML(t)}
   </div>`;
+}
+/* совет дня; к советам о сне, тревоге и 45+ — ссылка на рубрику сайта NL (не чаще, чем через день) */
+function tipHTML(t){
+  const [tag, text] = tipOfDay(t), rub = TIP_RUBRIC[tag];
+  return `<div class="tip"><b>Совет дня</b><p class="small">${esc(text)}</p>
+    ${rub ? `<button class="btn line sm" style="justify-self:start" data-act="goal-open" data-g="${esc(rub)}">Продукты NL: рубрика «${esc(rub)}»</button>` : ''}</div>`;
 }
 /* через день — совет по тому, что человек отметил в анкете (сон, энергия, тревога, 45+), в остальные дни — общий */
 function tipOfDay(t){
   const pr = S.profile, n = Math.abs(daysBetween('2026-01-01', t));
   const mine = [pr.concern, pr.sex === 'f' && pr.age >= 45 ? '45' : null].filter(x => x && x !== 'ok');
   const pool = TIPS.filter(([tag]) => n % 2 === 0 && mine.length ? mine.includes(tag) : ['food','water','move','weight'].includes(tag));
-  return pool[Math.floor(n/2) % pool.length][1];
+  return pool[Math.floor(n/2) % pool.length];
 }
 
 /* --- шаги и тренировки --- */
@@ -1126,6 +1154,7 @@ function renderProgress(){
 
     ${pathCard()}
     ${jumpCard(ws)}
+    ${cycleCard()}
 
     <div class="card chart">
       <div class="row between wrap"><h2>График веса</h2>
@@ -1190,8 +1219,31 @@ function jumpCard(ws){
   if (ws.length < 2 || S.profile.goal === 'gain') return '';
   const a = ws[ws.length-2], b = ws[ws.length-1], up = r1(b.kg - a.kg);
   if (up <= 0) return '';
+  const ci = cycleWaterDays(b.d);
   return `<div class="tip"><b>Вес вырос на ${fmtN(up)} кг — это нормально</b>
+    ${ci ? `<p class="small">В день замера был ${ci.day}-й день цикла: перед месячными и в первые дни организм задерживает воду, и вес часто прибавляет. Через несколько дней это уходит.</p>` : ''}
     <p class="small">Вес колеблется на 0,3–1 кг за день: вода, соль, цикл, поздний ужин. Смотри на тренд за 2–3 недели и на объёмы талии и бёдер — они часто уходят раньше веса.</p></div>`;
+}
+/* учёт цикла — только для женщин, выключается в настройках */
+function cycleCard(){
+  if (!cycleOn()) return '';
+  const t = todayKey(), ci = cycleInfo(t), ps = S.periods.slice().sort().reverse().slice(0, 3);
+  let about = `<p class="small muted">Отмечай начало месячных — так будет понятнее, почему вес иногда скачет: перед месячными и в первые дни организм задерживает воду.</p>`;
+  if (ci){
+    const late = ci.next < t;
+    const basis = ci.measured ? `средний цикл — ${nDays(ci.avg)}` : 'по циклу 28 дней; уточнится, когда отметишь следующие';
+    about = `<p class="small">Последние месячные начались ${fmtDay(ci.last)}. ${late
+      ? `Следующие ожидались примерно ${fmtDay(ci.next)} (${basis}) — отметь, когда начнутся.`
+      : `Следующие — примерно ${fmtDay(ci.next)} (${basis}).`}</p>`;
+  }
+  return `<form class="card" id="cycle-form">
+    <div class="row between"><h2>Цикл</h2>${ci ? `<span class="pill tnum">день ${ci.day}</span>` : ''}</div>
+    ${about}
+    <div class="steps-row"><input id="cycle-date" type="date" value="${t}" max="${t}" aria-label="Дата начала месячных"><button class="btn ghost" type="submit">Начались</button></div>
+    ${ps.length ? `<ul class="hist">${ps.map(d => `<li><div class="hd"><span class="tnum">${fmtDay(d)}</span></div>
+      <button class="x" type="button" data-act="del-period" data-d="${d}" aria-label="Удалить отметку за ${fmtDay(d)}">×</button></li>`).join('')}</ul>` : ''}
+    <p class="fine">Это не метод контрацепции и не медицинский прогноз: овуляцию приложение не рассчитывает. Если цикл беспокоит — обратись к гинекологу. Выключить учёт цикла можно в «Профиле» → «Настройки».</p>
+  </form>`;
 }
 
 function weightChart(all, target){
@@ -1273,8 +1325,13 @@ async function btConnect(){
 }
 
 /* ================= ПРОДУКТЫ ================= */
-let catQ = '', catC = '';
-function catalogList(){ return prodFilter(PRODUCTS, catQ, catC).sort((a,b) => (a.kind === 'other') - (b.kind === 'other')); }
+let catQ = '', catC = '', catG = '';
+/* в рубрике сначала БАДы, потом питание: NL относит к «Антистресс, сон» и все коктейли ED Smart */
+const KIND_ORDER = { supplement:0, food:1, other:2 };
+function catalogList(){
+  const list = prodFilter(PRODUCTS, catQ, catC).filter(p => !catG || (p.goals || []).includes(catG));
+  return list.sort(catG ? (a,b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] : (a,b) => (a.kind === 'other') - (b.kind === 'other'));
+}
 function catalogRows(list){
   if (!list.length) return `<p class="empty">Ничего не нашлось. Попробуйте другое слово.</p>`;
   return list.map(p => `<button class="prow ${p.kind === 'other' ? 'dim' : ''}" data-act="open-product" data-id="${p.id}">${tileHTML(p)}
@@ -1304,6 +1361,9 @@ function renderProducts(){
     <div class="prodpage" style="display:grid;gap:10px">
       <input id="cat-q" type="search" placeholder="Поиск по ${PRODUCTS.length} продуктам" value="${esc(catQ)}" aria-label="Поиск продукта">
       ${catChips('cat-cat', catC)}
+      <div class="eyebrow" id="goal-chips">По теме — рубрики сайта NL</div>
+      <div class="chips scroll">${[['','Все темы'], ...GOAL_RUBRICS.map(g => [g,g])].map(([v,l]) => `<button class="chip ${v === catG ? 'on' : ''}" data-act="cat-goal" data-g="${esc(v)}">${esc(l)}</button>`).join('')}</div>
+      ${catG ? `<p class="fine">Рубрика «${esc(catG)}» — как на сайте NL. Это не рекомендация: подходящий продукт поможет выбрать консультант, а перед приёмом прочитайте инструкцию на странице продукта.</p>` : ''}
     </div>
     <div class="plist" id="cat-list">${catalogRows(list)}</div>
     <p class="fine">Данные с сайта NL International${NL_META.collected ? ' на ' + new Date(NL_META.collected).toLocaleDateString('ru-RU') : ''}. Продукция не является лекарственным средством. Перед началом программы посоветуйтесь с врачом, если у вас есть хронические заболевания, беременность или кормление грудью.</p>
@@ -1373,6 +1433,8 @@ function renderProfile(){
       <label>Напоминать о взвешивании<select id="st-weigh">${opt(WEIGH_EVERY, p.weighEvery ?? 7)}</select></label>
       <div class="setrow"><span>Хлебные единицы (ХЕ) в дневнике<br><span class="small muted">1 ХЕ = 12 г углеводов</span></span>
         <button class="btn sm ${p.xe ? 'ghost' : 'line'}" data-act="toggle-xe" aria-pressed="${!!p.xe}">${p.xe ? 'Показывать' : 'Не показывать'}</button></div>
+      ${p.sex === 'f' ? `<div class="setrow"><span>Учёт цикла в «Прогрессе»</span>
+        <button class="btn sm ${p.cycle === false ? 'line' : 'ghost'}" data-act="toggle-cycle" aria-pressed="${p.cycle !== false}">${p.cycle === false ? 'Выключен' : 'Включён'}</button></div>` : ''}
       <p class="fine">Напоминания показываются на экране «Сегодня», когда вы открываете приложение.</p>
     </div>
 
@@ -1557,6 +1619,9 @@ const FAQ = [
     { q:'Можно ли беременным и кормящим?', a:[
       'Для многих продуктов NL беременность и кормление грудью — противопоказание. Смотри противопоказания на упаковке и на странице продукта.',
       'Программы с продуктами в этот период не подходят. Любые продукты — только после консультации с врачом.' ] },
+    { q:'Зачем отмечать цикл?', a:[
+      'Чтобы понимать колебания веса: перед месячными и в первые дни организм задерживает воду, и вес часто прибавляет. Это не жир — через несколько дней уходит.',
+      'Отмечай начало месячных в «Прогрессе» → «Цикл». Овуляцию приложение не рассчитывает: это не метод контрацепции. Если цикл беспокоит — обратись к гинекологу.' ] },
     { q:'Можно ли при хронических заболеваниях?', a:[
       'Перед любой программой с продуктами посоветуйся с врачом и прочитай противопоказания на странице продукта.' ] },
     { q:'Можно ли БАДы вместе с лекарствами?', a:[
@@ -1577,6 +1642,9 @@ const FAQ = [
       'Только в официальных магазинах NL — в интернет-магазине и магазинах компании. Приложение ничего не продаёт.',
       { html:`<a href="${SHOP_URL}" target="_blank" rel="noopener">Интернет-магазин NL ↗</a>` },
       'Подобрать продукты поможет твой консультант NL.' ] },
+    { q:'Как найти продукты по теме (сон, для женщин…)?', a:[
+      '«Продукты» → строка «По теме — рубрики сайта NL»: «Антистресс, сон», «Для неё», «Для него», «Работа мозга». Продукты разложены так же, как на сайте NL.',
+      'Это не рекомендация конкретного продукта: подобрать подходящий поможет консультант, а перед приёмом прочитай инструкцию на странице продукта.' ] },
     { q:'Кто такой консультант NL?', a:[
       'Это партнёр NL, который помогает подобрать продукты и программу, отвечает на вопросы и поддерживает на марафоне.',
       'Если у тебя его нет, спроси человека, который дал тебе ссылку на «Тонус».' ] },
@@ -1689,7 +1757,8 @@ async function survey(){
   const tips = { sleep:'Про сон: проветривай спальню, ложись в одно и то же время и откладывай телефон за час до сна.',
     energy:'Про энергию: не пропускай завтрак, пей воду по норме и выходи на короткие прогулки.',
     stress:'Когда тревожно, помогает медленное дыхание: вдох на 4 счёта, выдох на 6. Ещё — прогулка, тёплый душ, спокойная музыка.' }[d.concern];
-  if (tips) await botSay(tips + ' Такие советы будут на экране «Сегодня». Если это беспокоит долго — обратись к врачу.');
+  if (tips) await botSay(tips + ' Такие советы будут на экране «Сегодня». Если это беспокоит долго — обратись к врачу.'
+    + (TIP_RUBRIC[d.concern] ? ` А продукты NL по этой теме собраны в «Продуктах» — рубрика сайта NL «${TIP_RUBRIC[d.concern]}».` : ''));
 
   let offer = true;
   if (d.health === 'preg'){
@@ -1818,6 +1887,11 @@ document.addEventListener('click', e => {
     case 'toggle-hints': S.profile.hints = S.profile.hints === false; commit(); break;
     case 'toggle-xe': S.profile.xe = !S.profile.xe; commit(); break;
     case 'supp-open': closeSheet(); openSupp(d.id); break;
+    case 'toggle-cycle': S.profile.cycle = S.profile.cycle === false; commit(); break;
+    case 'del-period': {
+      const i = S.periods.indexOf(d.d); if (i < 0) break;
+      S.periods.splice(i, 1); commit();
+      toast(`Удалена отметка за ${fmtDay(d.d)}`, () => { S.periods.push(d.d); commit(); }); break; }
     case 'supp-when': sh.when = d.w; document.querySelectorAll('[data-act="supp-when"]').forEach(c => c.classList.toggle('on', c.dataset.w === d.w)); break;
     case 'supp-check': { const day = S.suppChecks[t] || (S.suppChecks[t] = {}); if (day[d.id]) delete day[d.id]; else day[d.id] = true; commit(); break; }
     case 'supp-del': {
@@ -1842,6 +1916,8 @@ document.addEventListener('click', e => {
     case 'open-product': openProduct(d.id); break;
     case 'nl-cat': sh.pc = d.c; renderSheet(); break;
     case 'cat-cat': catC = d.c; renderProducts(); break;
+    case 'cat-goal': catG = d.g; renderProducts(); break;
+    case 'goal-open': catG = d.g; catC = ''; catQ = ''; closeSheet(); show('products', 'goal-chips'); break;
     case 'start-program':
       S.program = { id:d.id, start:t }; S.checks[t] = {}; save(); closeSheet();
       show('today'); toast(`Программа «${progById(d.id).name}» начата`); break;
@@ -1892,6 +1968,10 @@ document.addEventListener('submit', e => {
       if (ok !== true){ hint.textContent = ok; return; }
       answer(sp.step && sp.step < 1 ? r1(v) : Math.round(v), fmtN(v) + (sp.unit ? ' ' + sp.unit : ''));
     }
+  } else if (f.id === 'cycle-form'){
+    let d = $('cycle-date').value || t; if (d > t) d = t;
+    if (!S.periods.includes(d)) S.periods.push(d);
+    commit(); toast(`Отмечено: начало месячных ${fmtDay(d)}`);
   } else if (f.id === 'supp-form'){
     const name = $('supp-name').value.trim(); if (!name) return;
     const p = PRODUCTS.find(x => x.name === name);
