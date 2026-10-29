@@ -223,6 +223,31 @@ details p{margin-top:6px}
 .norm span{font-size:12px;color:var(--muted)}
 .fine{font-size:12.5px;color:var(--muted);line-height:1.5}
 
+/* assistant chat */
+.chat-wrap{position:fixed;inset:0;z-index:35;background:var(--bg);display:flex;flex-direction:column}
+.chat-head{display:flex;align-items:center;gap:12px;background:var(--surface);border-bottom:1px solid var(--line);padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.chat-head > div:not(.chat-av){flex:1;min-width:0}
+.chat-av{flex:none;width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--f-display);font-weight:600}
+.chat-log{flex:1;overflow-y:auto;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.chat-in-log{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:84%;padding:10px 14px;border-radius:18px;line-height:1.42;font-size:15.5px;white-space:pre-line;overflow-wrap:anywhere;animation:pop .18s ease-out}
+.msg.bot{background:var(--surface);border-bottom-left-radius:6px;align-self:flex-start;box-shadow:var(--shadow)}
+.msg.me{background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:6px;align-self:flex-end}
+.msg a{color:var(--accent);font-weight:700}
+.msg.typing{color:var(--muted);letter-spacing:.2em}
+@keyframes pop{from{transform:translateY(6px)}}
+.chat-foot{background:var(--surface);border-top:1px solid var(--line);padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.chat-foot-in{max-width:560px;margin:0 auto;display:grid;gap:8px}
+.replies{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.replies.col{flex-direction:column;align-items:stretch;max-height:46vh;overflow-y:auto}
+.reply{appearance:none;border:0;border-radius:16px;padding:10px 16px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:15px;cursor:pointer;min-height:44px;text-align:left}
+.replies:not(.col) .reply{border-radius:999px}
+.chat-form{display:flex;gap:8px;align-items:center}
+.chat-form input{flex:1}
+.chat-form .unit{color:var(--muted);font-weight:600}
+.chat-hint{font-size:13px;color:var(--bad);text-align:right}
+.chat-hint:empty{display:none}
+
 /* tab bar */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
 .tabs-in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
@@ -292,6 +317,16 @@ details p{margin-top:6px}
   </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<div class="chat-wrap" id="chat" role="dialog" aria-modal="true" aria-labelledby="chat-title" hidden>
+  <div class="chat-head">
+    <div class="chat-av" aria-hidden="true">Т</div>
+    <div><h2 id="chat-title">Помощник «Тонуса»</h2><div class="small muted" id="chat-sub">отвечает за пару секунд</div></div>
+    <button class="x" data-act="bot-close" aria-label="Закрыть помощника">×</button>
+  </div>
+  <div class="chat-log" id="chat-log"><div class="chat-in-log" id="chat-msgs" aria-live="polite"></div></div>
+  <div class="chat-foot"><div class="chat-foot-in" id="chat-foot"></div></div>
+</div>
 
 <script src="products.js"></script>
 <script>
@@ -487,7 +522,7 @@ function renderToday(){
     ${!S.demo && !S.profile.name && !S.weights.length ? `<div class="card">
       <h2>Добро пожаловать!</h2>
       <p class="small muted">Укажите рост, вес и цель, и приложение посчитает вашу норму калорий, белка и воды на день.</p>
-      <button class="btn" data-act="tab" data-v="profile">Заполнить профиль</button></div>` : ''}
+      <button class="btn" data-act="bot-open" data-mode="survey">Пройти анкету</button></div>` : ''}
 
     <div class="card kcal">
       <svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Съедено ${fmtN(tot.kcal,0)} из ${fmtN(g.kcal,0)} ккал">
@@ -530,6 +565,10 @@ function renderToday(){
       <div class="moods" role="radiogroup" aria-label="Самочувствие">${MOODS.map((m,i) => `<button class="mood ${S.mood[t] === i+1 ? 'on' : ''}" role="radio" aria-checked="${S.mood[t] === i+1}" data-act="mood" data-n="${i+1}"><span class="num">${i+1}</span><small>${m}</small></button>`).join('')}</div>
       <div class="row between"><span>Сон прошлой ночью</span>
         <div class="stepper"><button data-act="sleep" data-d="-0.5" aria-label="Меньше сна">−</button><b class="num">${fmtN(S.sleep[t] || 0)} ч</b><button data-act="sleep" data-d="0.5" aria-label="Больше сна">+</button></div></div>
+    </div>
+    <div class="card row between wrap">
+      <div style="min-width:0"><h2>Есть вопрос?</h2><p class="small muted">Помощник ответит на частые вопросы о питании, воде и приложении.</p></div>
+      <button class="btn ghost" data-act="bot-open" data-mode="faq">Спросить</button>
     </div>
     <p class="fine">«Тонус» — автор: ${esc(AUTHOR)}. Не является официальным приложением NL International.</p>`;
 }
@@ -636,9 +675,9 @@ function ownPane(){
       <label>Количество<input id="own-amount" maxlength="20" placeholder="1 тарелка"></label>
     </div>
     <div class="fgrid">
-      <label>Белки, г<input id="own-p" type="number" inputmode="decimal" min="0" step="0.1"></label>
-      <label>Жиры, г<input id="own-f" type="number" inputmode="decimal" min="0" step="0.1"></label>
-      <label>Углеводы, г<input id="own-c" type="number" inputmode="decimal" min="0" step="0.1"></label>
+      <label>Белки, г<input id="own-p" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.1"></label>
+      <label>Жиры, г<input id="own-f" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.1"></label>
+      <label>Углеводы, г<input id="own-c" type="text" inputmode="decimal" autocomplete="off" min="0" step="0.1"></label>
     </div>
     <button class="btn" type="submit">Добавить</button></form>`;
 }
@@ -698,11 +737,11 @@ function renderProgress(){
       <h2>Записать вес</h2>
       <div class="fgrid">
         <label>Дата<input id="w-date" type="date" value="${todayKey()}" max="${todayKey()}" required></label>
-        <label>Вес, кг<input id="w-kg" type="number" inputmode="decimal" step="0.1" min="25" max="300" required placeholder="${fmtN(cur)}"></label>
+        <label>Вес, кг<input id="w-kg" type="text" inputmode="decimal" autocomplete="off" step="0.1" min="25" max="300" required placeholder="${fmtN(cur)}"></label>
       </div>
       <div class="fgrid">
-        <label>Талия, см<input id="w-waist" type="number" inputmode="decimal" step="0.5" min="30" max="250" placeholder="необязательно"></label>
-        <label>Бёдра, см<input id="w-hips" type="number" inputmode="decimal" step="0.5" min="30" max="250" placeholder="необязательно"></label>
+        <label>Талия, см<input id="w-waist" type="text" inputmode="decimal" autocomplete="off" step="0.5" min="30" max="250" placeholder="необязательно"></label>
+        <label>Бёдра, см<input id="w-hips" type="text" inputmode="decimal" autocomplete="off" step="0.5" min="30" max="250" placeholder="необязательно"></label>
       </div>
       <button class="btn" type="submit">Сохранить</button>
       ${ws.length ? `<ul class="hist">${ws.slice(-5).reverse().map(w => `<li><div class="hd"><b class="tnum">${fmtN(w.kg)} кг</b> <span class="muted small">${fmtShort(w.d)}${w.waist ? ' · талия ' + fmtN(w.waist) + ' см' : ''}${w.hips ? ' · бёдра ' + fmtN(w.hips) + ' см' : ''}</span></div>
@@ -860,12 +899,12 @@ function renderProfile(){
         <label>Пол<select id="pf-sex">${opt([['f','Женский'],['m','Мужской']], p.sex)}</select></label>
         <label>Возраст<input id="pf-age" type="number" inputmode="numeric" min="14" max="99" value="${p.age}"></label>
         <label>Рост, см<input id="pf-height" type="number" inputmode="numeric" min="120" max="230" value="${p.height}"></label>
-        <label>Вес сейчас, кг<input id="pf-weight" type="number" inputmode="decimal" step="0.1" min="25" max="300" value="${currentWeight()}"></label>
+        <label>Вес сейчас, кг<input id="pf-weight" type="text" inputmode="decimal" autocomplete="off" step="0.1" min="25" max="300" value="${currentWeight()}"></label>
       </div>
       <label>Активность<select id="pf-activity">${opt(ACTIVITY, p.activity)}</select></label>
       <div class="fgrid">
         <label>Цель<select id="pf-goal">${opt(GOALS, p.goal)}</select></label>
-        <label>Желаемый вес, кг<input id="pf-target" type="number" inputmode="decimal" step="0.5" min="30" max="250" value="${p.target ?? ''}" placeholder="например, 65"></label>
+        <label>Желаемый вес, кг<input id="pf-target" type="text" inputmode="decimal" autocomplete="off" step="0.5" min="30" max="250" value="${p.target ?? ''}" placeholder="например, 65"></label>
       </div>
       <div><div class="eyebrow" style="margin-bottom:6px">Ваша норма</div><div id="pf-out">${normHTML()}</div></div>
       <p class="fine">Расчёт по формуле Миффлина — Сан Жеора с учётом активности и цели. Это ориентир, а не медицинская рекомендация.</p>
@@ -879,6 +918,12 @@ function renderProfile(){
         <div><b>iPhone</b><ol><li>Откройте ссылку в Safari</li><li>Нажмите «Поделиться» (квадрат со стрелкой)</li><li>Выберите «На экран „Домой“»</li></ol></div>
         <div><b>Android</b><ol><li>Откройте ссылку в Chrome</li><li>Меню ⋮ → «Установить приложение» или «Добавить на главный экран»</li></ol></div>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>Помощник</h2>
+      <p class="small muted">Анкета пересчитает норму и поможет выбрать программу. В частых вопросах — ответы о питании, воде и приложении.</p>
+      <div class="grid2"><button class="btn ghost" data-act="bot-open" data-mode="survey">Пройти анкету</button><button class="btn line" data-act="bot-open" data-mode="faq">Частые вопросы</button></div>
     </div>
 
     <div class="card">
@@ -905,7 +950,7 @@ function onProfileInput(el){
     case 'pf-height': if (+v >= 120 && +v <= 230) p.height = +v; break;
     case 'pf-activity': p.activity = +v; break;
     case 'pf-goal': p.goal = v; break;
-    case 'pf-target': p.target = +v >= 30 && +v <= 250 ? +v : null; break;
+    case 'pf-target': { const x = Number(String(v).replace(',', '.')); p.target = x >= 30 && x <= 250 ? x : null; break; }
     case 'pf-weight': {
       const kg = r1(+String(v).replace(',', '.'));
       if (kg >= 25 && kg <= 300){ const t = todayKey(), ex = S.weights.find(w => w.d === t); upsertWeight(t, kg, ex && ex.waist, ex && ex.hips); }
@@ -914,6 +959,183 @@ function onProfileInput(el){
   }
   save();
   const out = $('pf-out'); if (out) out.innerHTML = normHTML();
+}
+
+/* ================= ПОМОЩНИК: анкета и частые вопросы ================= */
+/* Сценарий без ИИ: вопросы с готовыми ответами, всё считается на телефоне */
+const SHOP_URL = 'https://ng.nlstar.com/ru';
+const ED_URL = 'https://ng.nlstar.com/ru/catalog/products/healthy-diet';
+const FAQ = [
+  { q:'Как пользоваться приложением?', a:[
+    'Всё просто:\n• «Сегодня» — калории за день, вода, программа, самочувствие и сон.\n• «Питание» — дневник: добавляй обычную еду и продукты NL.\n• «Прогресс» — вес, график, пульс и давление.\n• «Продукты» — каталог NL с КБЖУ и программы.\n• «Профиль» — твои данные и норма.',
+    'Совет: записывай еду сразу после приёма пищи — так проще ничего не забыть.' ] },
+  { q:'Как считается моя норма калорий?', a:[
+    'Я считаю по формуле Миффлина — Сан Жеора: учитываю пол, возраст, рост и вес, а потом умножаю на уровень активности.',
+    'Если цель — снизить вес, отнимаю 15%, если набрать — добавляю 10%. Белок — 1,4 г на килограмм веса, вода — 30 мл на килограмм.',
+    'Это ориентир, а не медицинская рекомендация. Когда ты записываешь новый вес, норма пересчитывается сама.' ] },
+  { q:'Как приготовить коктейль ED Smart?', a:[
+    'Точный способ приготовления указан на упаковке и на странице продукта: у разных вкусов и супов он немного отличается.',
+    'Обычно содержимое саше взбивают в шейкере с водой или молоком и пьют сразу.',
+    { html:`<a href="${ED_URL}" target="_blank" rel="noopener">Коктейли и супы ED Smart на сайте NL ↗</a>` } ] },
+  { q:'Можно ли заменить коктейлем всю еду?', a:[
+    'Нет. По инструкции NL коктейль не должен быть единственным источником питания: хотя бы раз в день нужна обычная еда и достаточно воды.',
+    'Поэтому в программах коктейль заменяет только завтрак или ужин.' ] },
+  { q:'Сколько пить воды?', a:[
+    'Ориентир в приложении — 30 мл на килограмм веса: при весе 70 кг это около 2,1 л в день.',
+    'Пей равномерно в течение дня. В жару и в дни тренировок воды нужно больше.',
+    'Отмечай стаканы на экране «Сегодня» — так видно, сколько осталось.' ] },
+  { q:'Можно ли беременным и кормящим?', a:[
+    'Для многих продуктов NL беременность и кормление грудью — противопоказание. Смотри противопоказания на упаковке и на странице продукта.',
+    'Программы с продуктами в этот период не подходят. Любые продукты — только после консультации с врачом.' ] },
+  { q:'Как правильно взвешиваться?', a:[
+    'Лучше 1–2 раза в неделю: утром, натощак, на одних и тех же весах.',
+    'Вес колеблется изо дня в день из-за воды и соли, поэтому смотри на график за несколько недель, а не на одно число.' ] },
+  { q:'Что делать, если вес стоит?', a:[
+    'Остановки веса — нормальная часть пути, особенно после первых недель.',
+    'Проверь: всё ли записываешь в дневник, хватает ли воды и сна, не выросли ли порции.',
+    'Если вес не меняется 3–4 недели, обсуди это со своим консультантом NL, а если беспокоит самочувствие — с врачом.' ] },
+  { q:'Где купить продукты NL?', a:[
+    'Только в официальных магазинах NL — в интернет-магазине и магазинах компании. Приложение ничего не продаёт.',
+    { html:`<a href="${SHOP_URL}" target="_blank" rel="noopener">Интернет-магазин NL ↗</a>` },
+    'Подобрать продукты поможет твой консультант NL.' ] },
+  { q:'Где хранятся мои данные?', a:[
+    'Только на твоём телефоне. Регистрации нет, я ничего никуда не отправляю — твои записи не видит никто, кроме тебя.',
+    'Если удалить приложение или очистить данные браузера, записи пропадут.' ] },
+  { q:'Как установить приложение на телефон?', a:[
+    'iPhone: открой ссылку в Safari → «Поделиться» → «На экран „Домой“».',
+    'Android: открой ссылку в Chrome → меню ⋮ → «Установить приложение».' ] }
+];
+
+const bot = { mode:null, run:0, resolve:null, spec:null };
+const reducedMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const pause = ms => new Promise(r => setTimeout(r, reducedMotion() ? 0 : ms));
+function chatScroll(){ const log = $('chat-log'); log.scrollTop = log.scrollHeight; }
+function bubble(cls, content){
+  const el = document.createElement('div');
+  el.className = 'msg ' + cls;
+  if (content && content.html) el.innerHTML = content.html; else el.textContent = content;
+  $('chat-msgs').appendChild(el); chatScroll(); return el;
+}
+async function botSay(...lines){
+  const run = bot.run;
+  for (const line of lines){
+    const t = bubble('bot typing', '•••');
+    await pause(420);
+    if (run !== bot.run) return;
+    t.remove(); bubble('bot', line);
+  }
+}
+function setFoot(spec){
+  bot.spec = spec || null;
+  const f = $('chat-foot');
+  if (!spec){ f.innerHTML = ''; return; }
+  if (spec.replies){
+    f.innerHTML = `<div class="replies ${spec.col ? 'col' : ''}">${spec.replies.map(([l], i) => `<button class="reply" data-act="bot-reply" data-i="${i}">${esc(l)}</button>`).join('')}</div>`;
+  } else {
+    const n = spec.input.type !== 'text';
+    f.innerHTML = `<form class="chat-form" id="chat-form">
+      <input id="chat-in" ${n ? `type="text" inputmode="decimal" autocomplete="off" step="${spec.input.step || 1}"` : 'type="text" maxlength="30" autocomplete="given-name"'} placeholder="${esc(spec.input.placeholder || '')}" aria-label="${esc(spec.input.placeholder || 'Ответ')}" required>
+      ${spec.input.unit ? `<span class="unit">${esc(spec.input.unit)}</span>` : ''}
+      <button class="btn" type="submit">Ответить</button></form><div class="chat-hint" id="chat-hint"></div>`;
+    const i = $('chat-in'); if (i) i.focus({ preventScroll:true });
+  }
+}
+function waitAnswer(spec){ return new Promise(res => { bot.resolve = res; setFoot(spec); }); }
+function answer(value, label){
+  if (!bot.resolve) return;
+  const res = bot.resolve; bot.resolve = null; setFoot(null);
+  bubble('me', label); res(value);
+}
+function openBot(mode){
+  bot.mode = mode; bot.run++; bot.resolve = null;
+  $('chat-msgs').innerHTML = ''; setFoot(null);
+  $('chat-sub').textContent = mode === 'survey' ? 'анкета: норма и программа' : 'частые вопросы';
+  $('chat').hidden = false; document.body.style.overflow = 'hidden';
+  (mode === 'survey' ? survey() : faq()).catch(() => {});
+}
+function closeBot(){
+  if (bot.mode === 'survey' && !S.onboarded){ S.onboarded = true; save(); }
+  bot.run++; bot.resolve = null; bot.mode = null;
+  $('chat').hidden = true; document.body.style.overflow = '';
+  RENDER[view]();
+}
+
+async function survey(){
+  const run = bot.run, d = {};
+  const alive = () => run === bot.run;
+  await botSay('Привет! Я помощник «Тонуса».', 'Задам несколько вопросов, посчитаю твою норму калорий, белка и воды и предложу программу. Это займёт около минуты.');
+  if (!alive()) return;
+  await waitAnswer({ replies:[['Начнём', 1]] });
+  await botSay('Как тебя зовут?');
+  d.name = await waitAnswer({ input:{ type:'text', placeholder:'Имя' } });
+  await botSay(`Приятно познакомиться, ${d.name}!`, 'Укажи пол — от него зависит расчёт нормы.');
+  d.sex = await waitAnswer({ replies:[['Женщина','f'],['Мужчина','m']] });
+  await botSay('Сколько тебе лет?');
+  d.age = await waitAnswer({ input:{ min:14, max:99, unit:'лет', placeholder:'Возраст' } });
+  await botSay('Какой у тебя рост?');
+  d.height = await waitAnswer({ input:{ min:120, max:230, unit:'см', placeholder:'Рост' } });
+  await botSay('А сколько ты весишь сейчас?');
+  d.weight = await waitAnswer({ input:{ min:25, max:300, step:0.1, unit:'кг', placeholder:'Вес' } });
+  await botSay('Насколько много ты двигаешься в обычную неделю?');
+  d.activity = await waitAnswer({ replies: ACTIVITY.map(([v,l]) => [l, v]), col:true });
+  await botSay('Какая у тебя цель?');
+  d.goal = await waitAnswer({ replies: GOALS.map(([v,l]) => [l, v]) });
+  d.target = null;
+  if (d.goal !== 'keep'){
+    await botSay('Сколько ты хочешь весить? Это будет твоя цель.');
+    d.target = await waitAnswer({ input:{ min:30, max:250, step:0.5, unit:'кг', placeholder:'Желаемый вес',
+      check: v => d.goal === 'lose' ? (v < d.weight || 'Для снижения веса цель должна быть меньше текущего веса')
+                                    : (v > d.weight || 'Для набора веса цель должна быть больше текущего веса') } });
+  }
+  await botSay('И важный вопрос о здоровье. Что-то из этого про тебя?');
+  d.health = await waitAnswer({ replies:[['Беременность или кормление грудью','preg'],['Хронические заболевания или приём лекарств','chronic'],['Ничего из этого','none']], col:true });
+  if (!alive()) return;
+
+  // сохраняем профиль и считаем норму
+  Object.assign(S.profile, { name:d.name, sex:d.sex, age:d.age, height:d.height, activity:d.activity, goal:d.goal, target:d.target });
+  upsertWeight(todayKey(), r1(d.weight));
+  S.onboarded = true; save();
+  const g = goals();
+  await botSay(`Готово, ${d.name}! Твоя норма на день:\n• ${fmtN(g.kcal,0)} ккал\n• белок — ${g.p} г\n• вода — ${fmtN(g.water/1000,1)} л`,
+    'Расчёт по формуле Миффлина — Сан Жеора с учётом активности и цели. Это ориентир, а не медицинская рекомендация.');
+
+  let offer = true;
+  if (d.health === 'preg'){
+    offer = false;
+    await botSay('В этот период программы с продуктами не подходят: у многих продуктов NL это противопоказание. Дневник питания, воды и веса вести можно. Любые продукты — только после консультации с врачом.');
+  } else if (d.age < 18){
+    offer = false;
+    await botSay('Программы с продуктами рассчитаны на взрослых, поэтому их я не предлагаю. Дневник питания, воды и веса — пожалуйста.');
+  } else if (d.health === 'chronic'){
+    await botSay('Перед началом любой программы с продуктами обязательно посоветуйся с врачом.');
+  }
+  if (offer){
+    await botSay('Хочешь начать программу с продуктами NL? На экране «Сегодня» появится список: что и когда принимать.');
+    const pid = await waitAnswer({ replies: PROGRAMS.map(p => [`${p.name} · ${p.days} дн.`, p.id]).concat([['Пока без программы','none']]), col:true });
+    if (pid !== 'none'){
+      const pr = progById(pid), t = todayKey();
+      S.program = { id:pid, start:t }; S.checks[t] = {}; save();
+      await botSay(`Начинаем «${pr.name}»:\n` + pr.plan.map(i => `• ${i.when}: ${i.text}`).join('\n'),
+        'Перед началом прочитай инструкцию к каждому продукту. Отмечать приём можно на экране «Сегодня».');
+    }
+  }
+  await botSay('Всё готово! Поменять данные можно в «Профиле», а ответы на частые вопросы — у меня в разделе «Есть вопрос?».');
+  await waitAnswer({ replies:[['Перейти к дневнику', 1]] });
+  if (alive()){ closeBot(); show('today'); }
+}
+
+async function faq(){
+  const run = bot.run;
+  await botSay('Привет! Я отвечу на частые вопросы. Выбери тему:');
+  while (run === bot.run){
+    const i = await waitAnswer({ replies: FAQ.map((f, k) => [f.q, k]).concat([['Закрыть', 'close']]), col:true });
+    if (i === 'close'){ closeBot(); return; }
+    await botSay(...FAQ[i].a);
+    if (run !== bot.run) return;
+    const next = await waitAnswer({ replies:[['Другой вопрос','more'],['Закрыть','close']] });
+    if (next === 'close'){ closeBot(); return; }
+    await botSay('Выбери тему:');
+  }
 }
 
 /* ================= навигация, окно, уведомления ================= */
@@ -948,6 +1170,9 @@ document.addEventListener('click', e => {
   const a = b.dataset.act, t = todayKey(), d = b.dataset;
   switch (a){
     case 'tab': closeSheet(); show(d.v, d.to); break;
+    case 'bot-open': closeSheet(); openBot(d.mode); break;
+    case 'bot-close': closeBot(); break;
+    case 'bot-reply': { const r = bot.spec && bot.spec.replies && bot.spec.replies[+d.i]; if (r) answer(r[1], r[0]); break; }
     case 'add-food': openAddFood(d.meal, d.day); break;
     case 'water-add': S.water[t] = Math.max(0, (S.water[t] || 0) + Number(d.ml)); commit(); break;
     case 'water-set': { const n = +d.n, cur = Math.floor((S.water[t] || 0)/250); S.water[t] = (n === cur ? n - 1 : n)*250; commit(); break; }
@@ -1017,7 +1242,7 @@ document.addEventListener('click', e => {
 
 document.addEventListener('submit', e => {
   e.preventDefault();
-  const f = e.target, t = todayKey(), num = id => { const v = $(id).value.replace(',', '.'); return v === '' ? null : Number(v); };
+  const f = e.target, t = todayKey(), num = id => { const v = $(id).value.trim().replace(',', '.'); if (v === '') return null; const x = Number(v); return Number.isFinite(x) ? x : null; };
   if (f.id === 'w-form'){
     const kg = num('w-kg'); if (!(kg >= 25 && kg <= 300)) return;
     const d = $('w-date').value || t;
@@ -1029,6 +1254,18 @@ document.addEventListener('submit', e => {
     S.pulse.push({ t:Date.now(), bpm:Math.round(bpm), sys: sys && dia ? Math.round(sys) : null, dia: sys && dia ? Math.round(dia) : null, src:'manual' });
     commit(); toast('Замер сохранён');
     requestAnimationFrame(() => { const el = $('health'); if (el) el.scrollIntoView({ block:'start' }); });
+  } else if (f.id === 'chat-form' && bot.spec && bot.spec.input){
+    const sp = bot.spec.input, raw = $('chat-in').value.trim(), hint = $('chat-hint');
+    if (sp.type === 'text'){
+      if (!raw) return;
+      answer(raw.slice(0, 30), raw.slice(0, 30));
+    } else {
+      const v = Number(raw.replace(',', '.'));
+      if (!(v >= sp.min && v <= sp.max)){ hint.textContent = `Введите число от ${sp.min} до ${sp.max}`; return; }
+      const ok = sp.check ? sp.check(v) : true;
+      if (ok !== true){ hint.textContent = ok; return; }
+      answer(sp.step && sp.step < 1 ? r1(v) : Math.round(v), fmtN(v) + (sp.unit ? ' ' + sp.unit : ''));
+    }
   } else if (f.id === 'g-form'){
     const g = num('g-grams'); if (!(g > 0)) return;
     const en = entryFromFood(FOODS[sh.pick], sh.meal, g), day = sh.day; closeSheet(); addEntry(day, en);
@@ -1049,7 +1286,10 @@ document.addEventListener('input', e => {
   else if (el.closest && el.closest('#pf') && el.id !== 'pf-weight') onProfileInput(el);
 });
 document.addEventListener('change', e => { if (e.target.id === 'pf-weight') onProfileInput(e.target); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!$('chat').hidden) closeBot(); else if (!$('sheet').hidden) closeSheet();
+});
 
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (view === 'profile') renderProfile(); });
 
@@ -1060,6 +1300,8 @@ if ('serviceWorker' in navigator && document.querySelector('link[rel="manifest"]
 
 const start = location.hash.slice(1);
 show(VIEWS.includes(start) ? start : 'today');
+/* первый запуск клиентской версии — анкета помощника */
+if (!S.demo && !S.onboarded && !S.profile.name && !S.weights.length) openBot('survey');
 })();
 </script>
 
