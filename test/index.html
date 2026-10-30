@@ -738,9 +738,46 @@ function macroBar(label, v, goal){
     <div class="mb-track"><i style="width:${pct.toFixed(1)}%"></i></div></div>`;
 }
 function tileHTML(p, big){ return `<div class="tile ${{ supplement:'sup', other:'oth' }[p.kind] || ''} ${big ? 'big' : ''}" aria-hidden="true">${esc(p.abbr)}</div>`; }
+/* Поиск понимает русское и английское написание: «дрейн эффект», «драй», «DrainEffect»; «эд смарт», «энерджи диет», «гринфлеш».
+   Каждое слово запроса ищем в трёх видах: как есть (без пробелов, ё = е), латиницей и «скелетом» из согласных
+   (drain и дрейн → drn, collagen и коллаген → klgn) — скелет должен совпасть с началом слова в названии */
+const TR = { а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'j',з:'z',и:'i',й:'i',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',
+  х:'h',ц:'ts',ч:'ch',ш:'sh',щ:'sh',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya' };
+const compact = s => s.toLowerCase().replace(/ё/g, 'е').replace(/[^\p{L}\p{N}]+/gu, '');
+const translit = s => [...compact(s)].map(ch => TR[ch] ?? ch).join('');
+function skel(w){   // первая гласная остаётся меткой «a»: omega → amg, а не mg, как у magnesium
+  const t = translit(w).replace(/dj/g, 'j').replace(/g(?=[eiy])/g, 'j').replace(/c(?=[eiy])/g, 's').replace(/ph/g, 'f')
+    .replace(/[cq]/g, 'k').replace(/w/g, 'v').replace(/x/g, 'ks');
+  return (/^[aeiouy]/.test(t) ? 'a' : '') + t.replace(/[aeiouy]/g, '').replace(/(.)\1+/g, '$1');
+}
+const words = s => s.replace(/(\p{Ll})(\p{Lu})/gu, '$1 $2').split(/[^\p{L}\p{N}]+/u).filter(Boolean);   // «ДрейнЭффект» → «Дрейн», «Эффект»
+const searchKeys = new Map();
+function searchKey(text){
+  if (!searchKeys.has(text)) searchKeys.set(text, { c: compact(text), t: translit(text), w: words(text).map(skel) });
+  return searchKeys.get(text);
+}
+/* 2 — совпало написание (или основа: «мята» → «мяты», «фисташка» → «фисташковый»), 1 — только по звучанию, 0 — не подходит */
+function searchScore(text, q){
+  const k = searchKey(text);
+  let score = 2;
+  for (const w of words(q)){
+    const c = compact(w), stem = c.length >= 4 && /[аяыиеоуюйь]$/.test(c) ? c.slice(0, -1) : c;
+    if (k.c.includes(stem) || k.t.includes(translit(w))) continue;
+    const s = skel(w);   // по звучанию: 2 согласных хватает только коротким словам («драй», «коффе»), иначе слишком много лишнего
+    if ((s.length >= 3 || (s.length === 2 && c.length <= 5)) && k.w.some(x => x.startsWith(s))){ score = 1; continue; }
+    return 0;
+  }
+  return score;
+}
+/* показываем только лучшие совпадения: есть точные — похожие по звучанию не мешают */
+function textFilter(list, q, text){
+  if (!(q || '').trim()) return list;
+  const scored = list.map(x => [x, searchScore(text(x), q)]), best = Math.max(0, ...scored.map(([, s]) => s));
+  const phrase = compact(q), whole = x => searchKey(text(x)).c.includes(phrase) ? 0 : 1;   // вся фраза целиком («витамин с») — первой
+  return best ? scored.filter(([, s]) => s === best).map(([x]) => x).sort((a,b) => whole(a) - whole(b)) : [];
+}
 function prodFilter(list, q, cat){
-  const s = (q || '').trim().toLowerCase();
-  return list.filter(p => (!cat || p.cats.includes(cat)) && (!s || p.name.toLowerCase().includes(s) || (p.brand || '').toLowerCase().includes(s)));
+  return textFilter(list.filter(p => !cat || p.cats.includes(cat)), q, p => p.name + ' ' + (p.brand || ''));
 }
 function kcalLabel(p){ return p.kcal != null ? fmtN(p.kcal,0) + ' ккал ' + p.basis : p.kind === 'supplement' ? 'БАД' : p.kind === 'other' ? '' : 'калорийность не указана'; }
 function catChips(act, cur){
@@ -1128,8 +1165,8 @@ function nlPane(){
 }
 function foodListHTML(){
   // при поиске ищем по всем группам, иначе показываем выбранную группу
-  const q = sh.q.trim().toLowerCase();
-  const list = FOODS.map((f,i) => [f,i]).filter(([f]) => q ? f.name.toLowerCase().includes(q) : !sh.fc || f.grp === sh.fc);
+  const q = sh.q.trim(), all = FOODS.map((f,i) => [f,i]);
+  const list = q ? textFilter(all, q, ([f]) => f.name) : all.filter(([f]) => !sh.fc || f.grp === sh.fc);
   if (!list.length) return `<p class="empty" style="padding:10px 4px">Ничего не нашлось. Добавьте блюдо во вкладке «Своё блюдо».</p>`;
   return list.map(([f,i]) => `<button class="frow" data-act="pick-food" data-i="${i}"><span>${esc(f.name)}</span><span class="tnum">${f.kcal} ккал / 100 ${f.unit}</span></button>`).join('');
 }
