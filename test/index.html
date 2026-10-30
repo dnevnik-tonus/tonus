@@ -289,6 +289,8 @@ details p{margin-top:6px}
 .notes li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:7px}
 .notes .btn{justify-self:start;margin-top:6px}
 .tip{background:var(--accent-soft);border-radius:14px;padding:12px 14px;display:grid;gap:4px}
+.back{border:2px solid var(--accent)}
+.back p{margin:0}
 .tip > b{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent)}
 .mlist{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:14px}
 .mlist li{display:flex;justify-content:space-between;gap:10px}
@@ -725,7 +727,8 @@ function diaryStreak(){
 
 /* ---------- общие куски разметки ---------- */
 function demoBanner(){
-  if (window.TEST_BUILD) return `<div class="demo"><div><b>Тестовая версия</b> — только для проверки новинок. Записи здесь отдельные от основного «Тонуса».</div></div>`;
+  if (window.TEST_BUILD) return `<div class="demo"><div><b>Тестовая версия</b> — только для проверки новинок. Записи здесь отдельные от основного «Тонуса».</div>
+    <div class="row wrap"><span class="small">Показать «С возвращением», будто пропущено:</span>${[2,5,15].map(n => `<button class="btn sm line" data-act="test-back" data-n="${n}">${nDays(n)}</button>`).join('')}</div></div>`;
   return S.demo ? `<div class="demo"><div><b>Это демо с примерами.</b> Записи условные, всё можно нажимать и менять.</div>
     <button class="btn sm line" data-act="clear-demo">Начать с чистого листа</button></div>` : '';
 }
@@ -763,6 +766,7 @@ function renderToday(){
   $('v-today').innerHTML = `
     ${demoBanner()}
     <header class="vh"><div><div class="eyebrow">${esc(wd)}</div><h1>${hi}${S.profile.name ? ', ' + esc(S.profile.name) : ''}</h1></div></header>
+    ${backCard(t)}
     ${!S.demo && !S.profile.name && !S.weights.length ? `<div class="card">
       <h2>Добро пожаловать!</h2>
       <p class="small muted">Укажите рост, вес и цель, и приложение посчитает вашу норму калорий, белка и воды на день.</p>
@@ -819,6 +823,56 @@ function renderToday(){
       <button class="btn ghost" data-act="bot-open" data-mode="faq">Спросить</button>
     </div>
     <p class="fine">«Тонус» — автор: ${esc(AUTHOR)}. Не является официальным приложением NL International.</p>`;
+}
+
+/* «С возвращением»: человек не открывал приложение 2 дня и больше — дружелюбная карточка без упрёков, как в Duolingo.
+   День последнего входа хранится в S.lastSeen; у тех, кто обновился со старой версии, его ещё нет — берём день последней записи */
+function lastActivity(){
+  const keys = [S.meals, S.water, S.checks, S.mood, S.sleep, S.steps].flatMap(o => Object.keys(o || {}));
+  S.weights.forEach(w => keys.push(w.d));
+  return keys.length ? keys.reduce((a,b) => a > b ? a : b) : null;
+}
+function noteVisit(){
+  const t = todayKey();
+  if (S.lastSeen === t) return false;
+  const last = S.lastSeen || lastActivity(), missed = last ? daysBetween(last, t) - 1 : 0;
+  if (missed >= 2 && !S.demo && (S.profile.name || S.weights.length)) S.back = { d:t, missed };
+  S.lastSeen = t; save();
+  return true;
+}
+/* самая длинная серия дней подряд с записями в дневнике питания */
+function bestStreak(){
+  let best = 0, run = 0, prev = null;
+  for (const k of Object.keys(S.meals).filter(k => S.meals[k].length).sort()){
+    run = prev && daysBetween(prev, k) === 1 ? run + 1 : 1; best = Math.max(best, run); prev = k;
+  }
+  return best;
+}
+function backCard(t){
+  const b = S.back;
+  if (!b || b.d !== t || S.profile.hints === false) return '';
+  const n = b.missed, lines = [];
+  lines.push(n <= 3 ? `Ничего страшного — главное, что ты ${sx('вернулся','вернулась')}. Давай продолжим!`
+    : n <= 13 ? 'Так бывает у всех. Навёрстывать не нужно — просто продолжим с сегодняшнего дня.'
+    : 'Давно не виделись! Самое время начать заново — с чистого листа и без упрёков.');
+  if (S.program){
+    const p = progById(S.program.id), day = daysBetween(S.program.start, t) + 1;
+    if (p && day >= 1 && day <= p.days) lines.push(`Программа «${p.name}» продолжается: сегодня ${day}-й день из ${p.days}.`);
+  }
+  const best = bestStreak();
+  lines.push(best >= 3 ? `Твой рекорд — ${nDays(best)} дневника подряд. Начни новую серию сегодня и попробуй его побить!`
+    : 'Запиши сегодня хотя бы один приём пищи — и начнётся новая серия дней подряд.');
+  return `<div class="card back">
+    <div class="row between"><div><div class="eyebrow">Ты ${sx('пропустил','пропустила')} ${nDays(n)}</div>
+      <h2>С возвращением${S.profile.name ? ', ' + esc(S.profile.name) : ''}!</h2></div>
+      <button class="x" data-act="back-hide" aria-label="Закрыть">×</button></div>
+    ${lines.map(l => `<p class="small">${esc(l)}</p>`).join('')}
+    <div class="row wrap">
+      <button class="btn sm" data-act="add-food" data-meal="${mealByTime()}">Добавить еду</button>
+      <button class="btn sm ghost" data-act="water-add" data-ml="250">+ стакан воды</button>
+      ${n >= 7 ? `<button class="btn sm line" data-act="tab" data-v="progress" data-to="w-form">Записать вес</button>` : ''}
+    </div>
+  </div>`;
 }
 
 /* «На сегодня»: что не забыть + совет дня. Скрывается до завтра крестиком или совсем — в профиле */
@@ -1888,6 +1942,8 @@ document.addEventListener('click', e => {
       const [gone] = list.splice(i, 1); commit();
       toast(`Удалено: ${gone.type}`, () => { list.splice(i, 0, gone); S.workouts[t] = list; commit(); }); break; }
     case 'notes-hide': S.notesHidden = t; commit(); toast('Скрыто до завтра. Выключить совсем можно в «Профиле»'); break;
+    case 'back-hide': S.back = null; commit(); break;
+    case 'test-back': S.back = { d:t, missed:Number(d.n) }; commit(); window.scrollTo(0, 0); break;
     case 'toggle-hints': S.profile.hints = S.profile.hints === false; commit(); break;
     case 'toggle-xe': S.profile.xe = !S.profile.xe; commit(); break;
     case 'supp-open': closeSheet(); openSupp(d.id); break;
@@ -2026,7 +2082,10 @@ if ('serviceWorker' in navigator && document.querySelector('link[rel="manifest"]
 }
 
 const start = location.hash.slice(1);
+noteVisit();
 show(VIEWS.includes(start) ? start : 'today');
+/* установленное приложение может днями висеть в памяти телефона — новый день отмечаем и при возврате в него */
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && noteVisit() && view === 'today') renderToday(); });
 /* первый запуск клиентской версии — анкета помощника */
 if (!S.demo && !S.onboarded && !S.profile.name && !S.weights.length) openBot('survey');
 })();
