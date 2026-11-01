@@ -224,6 +224,7 @@ details p{margin-top:6px}
 .norm .num{font-size:18px}
 .norm span{font-size:12px;color:var(--muted)}
 .fine{font-size:12.5px;color:var(--muted);line-height:1.5}
+.fine a,.small a{color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 
 /* assistant chat */
 .chat-wrap{position:fixed;inset:0;z-index:35;background:var(--bg);display:flex;flex-direction:column}
@@ -360,6 +361,11 @@ details p{margin-top:6px}
    ================================================================ */
 /* Автор: по Стандартам NL (п. 6.2.2) ресурс партнёра подписывается его именем */
 const AUTHOR = 'Дмитрий и Екатерина Мёдовы, бизнес-партнёры NL';
+/* Telegram-чат «идеи и помощь»: туда же сообщают, если кто-то продаёт приложение. Пока пусто — кнопки чата не показываются */
+const SUPPORT_URL = 'https://t.me/+qLj2Dv82yAU2MjJk';
+const supportA = (label, cls = '') => SUPPORT_URL ? `<a ${cls ? `class="${cls}" ` : ''}href="${esc(SUPPORT_URL)}" target="_blank" rel="noopener">${label}</a>` : '';
+/* Приложение бесплатное: так человек поймёт, что его обманули, если с него взяли деньги */
+const freeNote = () => `«Тонус» бесплатный, продавать его нельзя.${SUPPORT_URL ? ` Если с вас взяли за него деньги, ${supportA('напишите нам')}.` : ''}`;
 const PRODUCTS = window.NL_PRODUCTS || [];
 const NL_META = window.NL_META || {};
 const CATS = ['Здоровое питание','Похудение','БАД и адаптогены','Коллаген','Для детей','Антиэйдж'];
@@ -807,7 +813,8 @@ function renderToday(){
     ${!S.demo && !S.profile.name && !S.weights.length ? `<div class="card">
       <h2>Добро пожаловать!</h2>
       <p class="small muted">Укажите рост, вес и цель, и приложение посчитает вашу норму калорий, белка и воды на день.</p>
-      <button class="btn" data-act="bot-open" data-mode="survey">Пройти анкету</button></div>` : ''}
+      <button class="btn" data-act="bot-open" data-mode="survey">Пройти анкету</button>
+      <p class="fine">${freeNote()}</p></div>` : ''}
     ${notesCard(t)}
 
     <div class="card kcal">
@@ -859,7 +866,7 @@ function renderToday(){
       <div style="min-width:0"><h2>Есть вопрос?</h2><p class="small muted">Помощник ответит на частые вопросы о питании, воде и приложении.</p></div>
       <button class="btn ghost" data-act="bot-open" data-mode="faq">Спросить</button>
     </div>
-    <p class="fine">«Тонус» — автор: ${esc(AUTHOR)}. Не является официальным приложением NL International.</p>`;
+    <p class="fine">«Тонус» — автор: ${esc(AUTHOR)}. Не является официальным приложением NL International. ${freeNote()}</p>`;
 }
 
 /* «С возвращением»: человек не открывал приложение 2 дня и больше — дружелюбная карточка без упрёков, как в Duolingo.
@@ -1541,10 +1548,16 @@ function renderProfile(){
            <div class="grid2"><button class="btn danger" data-act="reset-yes">Удалить</button><button class="btn line" data-act="reset-no">Отмена</button></div>`
         : `<button class="btn line" data-act="reset">Удалить все мои записи</button>`}
     </div>
+    ${SUPPORT_URL ? `<div class="card">
+      <h2>Идеи и помощь</h2>
+      <p class="small muted">Есть идея, что-то не работает или вам продали это приложение? Напишите нам в чат, мы читаем всё.</p>
+      <p class="fine">Это общая группа в Telegram: сообщения и список участников видят все, кто в ней состоит. Не пишите туда личное о здоровье.</p>
+      ${supportA('Написать в чат', 'btn line')}
+    </div>` : ''}
     <div class="card">
       <h2>О приложении</h2>
       <p class="small">Автор: <b>${esc(AUTHOR)}</b></p>
-      <p class="small muted">«Тонус» — бесплатный дневник питания, веса и здоровья. Не является официальным приложением NL International. Покупка продукции — только в официальных магазинах NL.</p>
+      <p class="small muted">«Тонус» — бесплатный дневник питания, веса и здоровья. Продавать его нельзя. Не является официальным приложением NL International. Покупка продукции — только в официальных магазинах NL.</p>
     </div>
     <p class="fine">Продукция не является лекарственным средством.</p>`;
 }
@@ -1600,7 +1613,13 @@ const FAQ = [
       'Сделай снимок экрана с графиком в «Прогрессе» и отправь его своему консультанту или в чат марафона. Сам я никуда ничего не отправляю.' ] },
     { q:'Как установить приложение на телефон?', a:[
       'iPhone: открой ссылку в Safari → «Поделиться» → «На экран „Домой“».',
-      'Android: открой ссылку в Chrome → меню ⋮ → «Установить приложение».' ] }
+      'Android: открой ссылку в Chrome → меню ⋮ → «Установить приложение».' ] },
+    { q:'Приложение платное?', a:[
+      'Нет, «Тонус» бесплатный для всех, и продавать его нельзя.',
+      ...(SUPPORT_URL ? [ 'Если с тебя взяли за него деньги, напиши нам в чат: разберёмся.', { html:supportA('Наша группа в Telegram ↗') } ] : []) ] },
+    ...(SUPPORT_URL ? [ { q:'Как предложить идею или сообщить об ошибке?', a:[
+      'Напиши нам в чат: что хочется добавить или что не работает. Мы читаем всё и улучшаем приложение.',
+      { html:supportA('Наша группа в Telegram ↗') } ] } ] : [])
   ] },
   { t:'Питание и калории', items:[
     { q:'Как считается моя норма калорий?', a:[
