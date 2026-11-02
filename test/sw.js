@@ -3,7 +3,7 @@
 // а если сети нет или она медленная — из сохранённой копии.
 // Каталог (products.js) в тестовой версии зашифрован внутри index.html — отдельного файла нет.
 // Номер в CACHE увеличивает deploy_github.sh: по нему телефоны узнают об обновлении.
-const CACHE = 'tonus-test-v9';
+const CACHE = 'tonus-test-v10';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const WAIT_MS = 3000; // столько ждём сеть, потом открываем сохранённую копию
 
