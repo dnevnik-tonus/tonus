@@ -1,9 +1,10 @@
 // Офлайн-режим: приложение сохраняется на телефоне и открывается без интернета.
 // Файлы приложения сначала берём из сети, чтобы новая версия была видна сразу,
 // а если сети нет или она медленная — из сохранённой копии.
+// Каталог (products.js) в тестовой версии зашифрован внутри index.html — отдельного файла нет.
 // Номер в CACHE увеличивает deploy_github.sh: по нему телефоны узнают об обновлении.
-const CACHE = 'tonus-test-v4';
-const ASSETS = ['./', './index.html', './products.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'tonus-test-v5';
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const WAIT_MS = 3000; // столько ждём сеть, потом открываем сохранённую копию
 
 self.addEventListener('install', e => {
